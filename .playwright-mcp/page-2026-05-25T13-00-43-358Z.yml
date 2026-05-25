@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - list [ref=e4]:
+        - listitem [ref=e5]:
+          - strong [ref=e6]: 🍎 Stock Tax IT
+      - list [ref=e7]:
+        - listitem [ref=e8]:
+          - link "Dashboard" [ref=e9] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e10]:
+          - link "Simulatore" [ref=e11] [cursor=pointer]:
+            - /url: /simulate/
+        - listitem [ref=e12]:
+          - link "Importa" [ref=e13] [cursor=pointer]:
+            - /url: /import/
+  - main [ref=e14]:
+    - heading "Portfolio" [level=2] [ref=e15]
+    - article [ref=e16]:
+      - paragraph [ref=e17]:
+        - text: Nessun lotto importato.
+        - link "Importa il file XLSX da E*TRADE" [ref=e18] [cursor=pointer]:
+          - /url: /import/
+        - text: .

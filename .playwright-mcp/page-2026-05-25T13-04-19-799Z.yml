@@ -1,0 +1,32 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - list [ref=e4]:
+        - listitem [ref=e5]:
+          - strong [ref=e6]: 🍎 Stock Tax IT
+      - list [ref=e7]:
+        - listitem [ref=e8]:
+          - link "Dashboard" [ref=e9] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=e10]:
+          - link "Simulatore" [ref=e11] [cursor=pointer]:
+            - /url: /simulate/
+        - listitem [ref=e12]:
+          - link "Importa" [ref=e13] [cursor=pointer]:
+            - /url: /import/
+  - main [ref=e14]:
+    - heading "Importa portfolio" [level=2] [ref=e15]
+    - article [ref=e16]:
+      - paragraph [ref=e17]:
+        - text: Carica il file
+        - strong [ref=e18]: ByStatus_expanded.xlsx
+        - text: esportato da E*TRADE. Verranno letti i lotti dalla sheet
+        - emphasis [ref=e19]: Sellable
+        - text: .
+      - paragraph [ref=e20]:
+        - text: 'Attualmente caricati:'
+        - strong [ref=e21]: 27 lotti
+        - text: . Un nuovo import li sostituirà tutti.
+      - generic [ref=e22]:
+        - button "Choose File" [active] [ref=e23]
+        - button "Importa" [ref=e24] [cursor=pointer]

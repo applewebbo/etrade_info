@@ -1,6 +1,87 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard — Stock Tax IT{% endblock %}
 {% block content %}
-  <h2>Dashboard</h2>
-  <p>Nessun lotto importato. <a href="/import/">Importa il tuo file XLSX</a>.</p>
+
+<h2>Portfolio</h2>
+
+{% if not has_lots %}
+<article>
+  <p>Nessun lotto importato. <a href="/import/">Importa il file XLSX da E*TRADE</a>.</p>
+</article>
+{% else %}
+
+<!-- Price header — aggiornato via HTMX ogni 60s -->
+<div hx-get="/prices/" hx-trigger="load, every 60s" hx-swap="outerHTML">
+  {% include "partials/price_header.html" %}
+</div>
+
+<!-- Riepilogo per tipo -->
+<div class="summary-grid">
+  <div class="summary-card">
+    <small>Portfolio FMV</small>
+    <strong>€{{ total_value_eur|floatformat:2 }}</strong>
+    <small>${{ total_value_usd|floatformat:2 }}</small>
+  </div>
+  <div class="summary-card">
+    <small>ESPP — {{ espp.qty }} azioni</small>
+    <strong>€{{ espp.value_eur|floatformat:2 }}</strong>
+    <small>Tasse stimate: €{{ espp.tax_eur|floatformat:2 }}</small>
+  </div>
+  <div class="summary-card">
+    <small>RSU — {{ rsu.qty }} azioni</small>
+    <strong>€{{ rsu.value_eur|floatformat:2 }}</strong>
+    <small>Tasse stimate: €{{ rsu.tax_eur|floatformat:2 }}</small>
+  </div>
+  <div class="summary-card">
+    <small>Tasse totali stimate</small>
+    <strong>€{{ total_tax_eur|floatformat:2 }}</strong>
+    <small>${{ total_tax_usd|floatformat:2 }}</small>
+  </div>
+</div>
+
+<!-- Tabella lotti -->
+<figure>
+<table>
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Data acquisto</th>
+      <th>Azioni</th>
+      <th>Cost basis</th>
+      <th>Valore oggi</th>
+      <th>Gain/Loss</th>
+      <th>Gain %</th>
+      <th>Tasse est.</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in rows %}
+  <tr>
+    <td>{{ row.lot.plan_type }}</td>
+    <td>{{ row.lot.date_acquired }}</td>
+    <td>{{ row.lot.sellable_qty }}</td>
+    <td>${{ row.lot.cost_basis|floatformat:4 }}</td>
+    <td>€{{ row.value_eur|floatformat:2 }}</td>
+    <td class="{% if row.gain_usd >= 0 %}gain{% else %}loss{% endif %}">
+      €{{ row.gain_eur|floatformat:2 }}</td>
+    <td class="{% if row.gain_pct >= 0 %}gain{% else %}loss{% endif %}">
+      {{ row.gain_pct|floatformat:1 }}%</td>
+    <td>€{{ row.tax_eur|floatformat:2 }}</td>
+    <td>
+      {% if row.lot.tax_status == "Long Term" %}
+        <span class="badge-long">Long</span>
+      {% else %}
+        <span class="badge-short">Short</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</figure>
+
+<p><a href="/simulate/" role="button">Vai al Simulatore →</a></p>
+
+{% endif %}
 {% endblock %}

@@ -3,24 +3,34 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Stock Tax Simulator{% endblock %}</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-    />
+    <title>{% block title %}Stock Tax IT{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
     <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+      .gain  { color: var(--pico-color-green-500); }
+      .loss  { color: var(--pico-color-red-500); }
+      .badge-long  { background: var(--pico-color-green-100); color: var(--pico-color-green-700);
+                     padding: .1rem .4rem; border-radius: .25rem; font-size: .75rem; }
+      .badge-short { background: var(--pico-color-orange-100); color: var(--pico-color-orange-700);
+                     padding: .1rem .4rem; border-radius: .25rem; font-size: .75rem; }
+      nav ul li a[aria-current] { font-weight: bold; }
+      .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+      .summary-card { background: var(--pico-card-background-color); border: 1px solid var(--pico-muted-border-color);
+                      border-radius: .5rem; padding: 1rem; text-align: center; }
+      .summary-card small { display: block; color: var(--pico-muted-color); margin-bottom: .25rem; font-size: .8rem; }
+      .summary-card strong { font-size: 1.4rem; }
+      .sim-sidebar { position: sticky; top: 1rem; }
+    </style>
   </head>
   <body>
     <header class="container">
       <nav>
+        <ul><li><strong>🍎 Stock Tax IT</strong></li></ul>
         <ul>
-          <li><strong>Stock Tax IT</strong></li>
-        </ul>
-        <ul>
-          <li><a href="/">Dashboard</a></li>
-          <li><a href="/simulate/">Simulatore</a></li>
-          <li><a href="/import/">Importa</a></li>
+          <li><a href="/" {% if request.path == "/" %}aria-current="page"{% endif %}>Dashboard</a></li>
+          <li><a href="/simulate/" {% if request.path == "/simulate/" %}aria-current="page"{% endif %}>Simulatore</a></li>
+          <li><a href="/import/" {% if request.path == "/import/" %}aria-current="page"{% endif %}>Importa</a></li>
         </ul>
       </nav>
     </header>
