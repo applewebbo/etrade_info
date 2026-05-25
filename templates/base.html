@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="it" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Stock Tax Simulator{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  </head>
+  <body>
+    <header class="container">
+      <nav>
+        <ul>
+          <li><strong>Stock Tax IT</strong></li>
+        </ul>
+        <ul>
+          <li><a href="/">Dashboard</a></li>
+          <li><a href="/simulate/">Simulatore</a></li>
+          <li><a href="/import/">Importa</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main class="container">{% block content %}{% endblock %}</main>
+  </body>
+</html>
