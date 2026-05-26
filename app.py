@@ -62,7 +62,7 @@ class Lot(models.Model):
 
 
 def _portfolio_context():
-    from prices import get_eur_usd_rate, get_stock_price_usd, is_price_stale
+    from prices import get_eur_usd_rate, get_price_direction, get_stock_price_usd, is_price_stale
     from tax_engine import calculate_sale_result
 
     lots = list(Lot.objects.all())
@@ -76,6 +76,7 @@ def _portfolio_context():
             "has_lots": bool(lots),
             "prices_unavailable": True,
             "prices_stale": False,
+            "price_direction": "neutral",
         }
 
     price_eur = price_usd / eur_usd
@@ -131,6 +132,7 @@ def _portfolio_context():
         "has_lots": bool(lots),
         "prices_stale": prices_stale,
         "prices_unavailable": False,
+        "price_direction": get_price_direction("AAPL"),
     }
 
 
@@ -150,13 +152,17 @@ def prices_fragment(request):
     """HTMX partial: refreshes the price header every 60s."""
     from django.shortcuts import render
 
-    from prices import get_eur_usd_rate, get_stock_price_usd, is_price_stale
+    from prices import get_eur_usd_rate, get_price_direction, get_stock_price_usd, is_price_stale
 
     price_usd = get_stock_price_usd()
     eur_usd = get_eur_usd_rate()
     prices_stale = is_price_stale("AAPL") or is_price_stale("EURUSD=X")
     prices_unavailable = price_usd is None or eur_usd is None
-    ctx = {"prices_stale": prices_stale, "prices_unavailable": prices_unavailable}
+    ctx = {
+        "prices_stale": prices_stale,
+        "prices_unavailable": prices_unavailable,
+        "price_direction": get_price_direction("AAPL"),
+    }
     if not prices_unavailable:
         ctx.update({"price_usd": price_usd, "price_eur": price_usd / eur_usd, "eur_usd": eur_usd})
     return render(request, "partials/price_header.html", ctx)

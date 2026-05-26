@@ -117,6 +117,54 @@ class TestGetPrice:
         assert not is_price_stale("AAPL")
 
 
+class TestPriceDirection:
+    def setup_method(self):
+        from prices import clear_cache
+
+        clear_cache()
+
+    def test_neutral_when_no_data(self):
+        from prices import get_price_direction
+
+        assert get_price_direction("AAPL") == "neutral"
+
+    def test_neutral_on_first_fetch(self):
+        from prices import get_price, get_price_direction
+
+        get_price("AAPL", fetcher=fixed_fetcher("308.82"))
+        assert get_price_direction("AAPL") == "neutral"
+
+    def test_up_when_price_increases(self, monkeypatch):
+        import prices
+        from prices import get_price, get_price_direction
+
+        times = [0, prices.CACHE_TTL + 1]
+        monkeypatch.setattr(prices, "_now", lambda: times.pop(0))
+        get_price("AAPL", fetcher=fixed_fetcher("300.00"))
+        get_price("AAPL", fetcher=fixed_fetcher("310.00"))
+        assert get_price_direction("AAPL") == "up"
+
+    def test_down_when_price_decreases(self, monkeypatch):
+        import prices
+        from prices import get_price, get_price_direction
+
+        times = [0, prices.CACHE_TTL + 1]
+        monkeypatch.setattr(prices, "_now", lambda: times.pop(0))
+        get_price("AAPL", fetcher=fixed_fetcher("310.00"))
+        get_price("AAPL", fetcher=fixed_fetcher("300.00"))
+        assert get_price_direction("AAPL") == "down"
+
+    def test_neutral_when_price_unchanged(self, monkeypatch):
+        import prices
+        from prices import get_price, get_price_direction
+
+        times = [0, prices.CACHE_TTL + 1]
+        monkeypatch.setattr(prices, "_now", lambda: times.pop(0))
+        get_price("AAPL", fetcher=fixed_fetcher("308.82"))
+        get_price("AAPL", fetcher=fixed_fetcher("308.82"))
+        assert get_price_direction("AAPL") == "neutral"
+
+
 class TestConvenienceFunctions:
     def setup_method(self):
         from prices import clear_cache

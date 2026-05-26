@@ -7,7 +7,9 @@
 <div class="summary-grid">
   <div class="summary-card">
     <small>AAPL — prezzo live</small>
-    <strong>${{ price_usd|floatformat:2 }}</strong>
+    <strong class="{% if price_direction == 'up' %}price-up{% elif price_direction == 'down' %}price-down{% endif %}">
+      ${{ price_usd|floatformat:2 }}
+    </strong>
     <small>€{{ price_eur|floatformat:2 }}</small>
   </div>
   <div class="summary-card">

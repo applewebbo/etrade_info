@@ -8,6 +8,7 @@ CACHE_TTL = 60  # seconds
 
 _cache: dict[str, tuple[Decimal, float]] = {}
 _last_known: dict[str, Decimal] = {}
+_prev_price: dict[str, Decimal] = {}
 _fetch_failed: set[str] = set()
 
 
@@ -32,6 +33,9 @@ def get_price(ticker: str, fetcher: Callable[[str], Decimal] | None = None) -> D
     fetch = fetcher or _fetch_yfinance
     try:
         price = fetch(ticker)
+        old = _last_known.get(ticker)
+        if old is not None and old != price:
+            _prev_price[ticker] = old
         _cache[ticker] = (price, now)
         _last_known[ticker] = price
         _fetch_failed.discard(ticker)
@@ -41,6 +45,19 @@ def get_price(ticker: str, fetcher: Callable[[str], Decimal] | None = None) -> D
         if cached:
             return cached[0]
         return _last_known.get(ticker)
+
+
+def get_price_direction(ticker: str) -> str:
+    """Return 'up', 'down', or 'neutral' based on last two fetched prices."""
+    current = _last_known.get(ticker)
+    prev = _prev_price.get(ticker)
+    if current is None or prev is None:
+        return "neutral"
+    if current > prev:
+        return "up"
+    if current < prev:
+        return "down"
+    return "neutral"
 
 
 def is_price_stale(ticker: str) -> bool:
@@ -59,4 +76,5 @@ def get_eur_usd_rate() -> Decimal | None:
 def clear_cache() -> None:
     _cache.clear()
     _last_known.clear()
+    _prev_price.clear()
     _fetch_failed.clear()
