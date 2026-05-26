@@ -22,7 +22,7 @@
 <!-- Riepilogo per tipo -->
 <div class="summary-grid">
   <div class="summary-card card-portfolio">
-    <small>Portfolio FMV</small>
+    <small>Valore di mercato</small>
     <strong>€{{ total_value_eur|floatformat:2 }}</strong>
     <small>${{ total_value_usd|floatformat:2 }}</small>
   </div>
@@ -44,6 +44,7 @@
 </div>
 
 <!-- Tabella lotti -->
+<div class="table-card">
 <figure>
 <table>
   <thead>
@@ -53,10 +54,10 @@
       <th>Azioni</th>
       <th>Cost basis</th>
       <th>Valore oggi</th>
-      <th>Gain/Loss</th>
-      <th>Gain %</th>
-      <th>Tasse est.</th>
-      <th>Status</th>
+      <th>Guadagno/Perdita</th>
+      <th>Var. %</th>
+      <th>Tasse stimate</th>
+      <th>Periodo</th>
     </tr>
   </thead>
   <tbody>
@@ -84,6 +85,7 @@
   </tbody>
 </table>
 </figure>
+</div>
 
 <p><a href="/simulate/" role="button">Vai al Simulatore →</a></p>
 
