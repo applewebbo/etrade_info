@@ -12,6 +12,8 @@ app = Django(
     },
     SECRET_KEY="local-dev-only-not-for-production",  # nosec B106
     ALLOWED_HOSTS=["localhost", "127.0.0.1"],
+    LANGUAGE_CODE="it",
+    USE_L10N=True,
     INSTALLED_APPS=[
         "django.contrib.contenttypes",
         "django.contrib.auth",
@@ -60,14 +62,23 @@ class Lot(models.Model):
 
 
 def _portfolio_context():
-    from prices import get_eur_usd_rate, get_stock_price_usd
+    from prices import get_eur_usd_rate, get_stock_price_usd, is_price_stale
     from tax_engine import calculate_sale_result
 
     lots = list(Lot.objects.all())
     price_usd = get_stock_price_usd()
     eur_usd = get_eur_usd_rate()
-    price_eur = price_usd / eur_usd
+    prices_stale = is_price_stale("AAPL") or is_price_stale("EURUSD=X")
+    prices_unavailable = price_usd is None or eur_usd is None
 
+    if prices_unavailable:
+        return {
+            "has_lots": bool(lots),
+            "prices_unavailable": True,
+            "prices_stale": False,
+        }
+
+    price_eur = price_usd / eur_usd
     rows = []
     total_value_usd = Decimal("0")
     total_tax_usd = Decimal("0")
@@ -118,6 +129,8 @@ def _portfolio_context():
         "espp": _summary("ESPP"),
         "rsu": _summary("RSU"),
         "has_lots": bool(lots),
+        "prices_stale": prices_stale,
+        "prices_unavailable": False,
     }
 
 
@@ -137,15 +150,16 @@ def prices_fragment(request):
     """HTMX partial: refreshes the price header every 60s."""
     from django.shortcuts import render
 
-    from prices import get_eur_usd_rate, get_stock_price_usd
+    from prices import get_eur_usd_rate, get_stock_price_usd, is_price_stale
 
     price_usd = get_stock_price_usd()
     eur_usd = get_eur_usd_rate()
-    return render(
-        request,
-        "partials/price_header.html",
-        {"price_usd": price_usd, "price_eur": price_usd / eur_usd, "eur_usd": eur_usd},
-    )
+    prices_stale = is_price_stale("AAPL") or is_price_stale("EURUSD=X")
+    prices_unavailable = price_usd is None or eur_usd is None
+    ctx = {"prices_stale": prices_stale, "prices_unavailable": prices_unavailable}
+    if not prices_unavailable:
+        ctx.update({"price_usd": price_usd, "price_eur": price_usd / eur_usd, "eur_usd": eur_usd})
+    return render(request, "partials/price_header.html", ctx)
 
 
 @app.route("/import/")
@@ -176,15 +190,18 @@ def import_view(request):
 def simulate(request):
     from django.shortcuts import render
 
-    from prices import get_eur_usd_rate, get_stock_price_usd
+    from prices import get_eur_usd_rate, get_stock_price_usd, is_price_stale
     from tax_engine import calculate_sale_result
 
     lots = list(Lot.objects.all())
     price_usd = get_stock_price_usd()
     eur_usd = get_eur_usd_rate()
+    prices_stale = is_price_stale("AAPL") or is_price_stale("EURUSD=X")
+    prices_unavailable = price_usd is None or eur_usd is None
 
     if request.method == "POST":
-        sale_price = Decimal(request.POST.get("sale_price", str(price_usd)))
+        default_price = str(price_usd) if price_usd is not None else "0"
+        sale_price = Decimal(request.POST.get("sale_price", default_price))
         selected = []
         for lot in lots:
             key = f"qty_{lot.pk}"
@@ -203,10 +220,17 @@ def simulate(request):
             {"result": result, "sale_price": sale_price, "eur_usd": eur_usd},
         )
 
+    price_eur = (price_usd / eur_usd) if not prices_unavailable else None
     return render(
         request,
         "simulate.html",
-        {"lots": lots, "price_usd": price_usd, "price_eur": price_usd / eur_usd},
+        {
+            "lots": lots,
+            "price_usd": price_usd,
+            "price_eur": price_eur,
+            "prices_stale": prices_stale,
+            "prices_unavailable": prices_unavailable,
+        },
     )
 
 

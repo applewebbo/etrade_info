@@ -19,6 +19,11 @@
           hx-swap="innerHTML">
       {% csrf_token %}
 
+      {% if prices_unavailable %}
+      <p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
+      {% elif prices_stale %}
+      <p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
+      {% endif %}
       <fieldset>
         <label>
           Prezzo vendita (USD)
@@ -26,7 +31,9 @@
                  value="{{ price_usd|floatformat:2 }}"
                  placeholder="Prezzo vendita USD" />
         </label>
+        {% if not prices_unavailable %}
         <small>Prezzo live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }})</small>
+        {% endif %}
       </fieldset>
 
       <figure>
@@ -47,7 +54,7 @@
           <td>{{ lot.plan_type }}</td>
           <td>{{ lot.date_acquired }}</td>
           <td>${{ lot.cost_basis|floatformat:4 }}</td>
-          <td>{{ lot.sellable_qty }}</td>
+          <td>{{ lot.sellable_qty|floatformat:"-4" }}</td>
           <td>
             {% if lot.tax_status == "Long Term" %}
               <span class="badge-long">Long</span>

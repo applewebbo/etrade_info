@@ -10,6 +10,16 @@ def fixed_fetcher(value: str):
     return _fetch
 
 
+def failing_fetcher():
+    """Returns a fetcher that always raises an exception."""
+
+    def _fetch(ticker: str) -> Decimal:
+        msg = "Network error"
+        raise ConnectionError(msg)
+
+    return _fetch
+
+
 def counting_fetcher(value: str):
     """Returns a fetcher that counts how many times it was called."""
     calls = []
@@ -76,6 +86,35 @@ class TestGetPrice:
         clear_cache()
         get_price("AAPL", fetcher=fetcher)
         assert len(calls) == 2
+
+    def test_fetch_error_returns_stale_cache(self, monkeypatch):
+        import prices
+        from prices import get_price, is_price_stale
+
+        # Warm the cache at t=0
+        times = [0, prices.CACHE_TTL + 1]
+        monkeypatch.setattr(prices, "_now", lambda: times.pop(0))
+
+        get_price("AAPL", fetcher=fixed_fetcher("308.82"))
+        # Cache expired, fetch fails → should return stale cached value
+        result = get_price("AAPL", fetcher=failing_fetcher())
+        assert result == Decimal("308.82")
+        assert is_price_stale("AAPL")
+
+    def test_fetch_error_with_no_cache_returns_none(self):
+        from prices import get_price, is_price_stale
+
+        result = get_price("AAPL", fetcher=failing_fetcher())
+        assert result is None
+        assert is_price_stale("AAPL")
+
+    def test_successful_fetch_clears_stale_flag(self):
+        from prices import get_price, is_price_stale
+
+        get_price("AAPL", fetcher=failing_fetcher())
+        assert is_price_stale("AAPL")
+        get_price("AAPL", fetcher=fixed_fetcher("310.00"))
+        assert not is_price_stale("AAPL")
 
 
 class TestConvenienceFunctions:

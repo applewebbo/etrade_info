@@ -58,10 +58,10 @@ fresh: clean install
 test *args:
     ENVIRONMENT=test uv run pytest -s -x {{ args }}
 
-# Run fast tests (parallel)
+# Run fast tests
 [group('utility')]
 ftest *args:
-    ENVIRONMENT=test uv run pytest -n 4 --dist loadscope --exitfirst {{ args }}
+    ENVIRONMENT=test uv run pytest --exitfirst {{ args }}
 
 # Run tests with coverage (must reach 100%)
 [group('utility')]

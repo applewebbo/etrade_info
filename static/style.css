@@ -1,0 +1,67 @@
+:root { font-size: 14px; }
+
+.gain { color: var(--pico-color-green-500); }
+.loss { color: var(--pico-color-red-500); }
+
+.badge-long {
+  background: var(--pico-color-green-100);
+  color: var(--pico-color-green-700);
+  padding: .1rem .4rem;
+  border-radius: .25rem;
+  font-size: .75rem;
+}
+.badge-short {
+  background: var(--pico-color-orange-100);
+  color: var(--pico-color-orange-700);
+  padding: .1rem .4rem;
+  border-radius: .25rem;
+  font-size: .75rem;
+}
+
+nav ul li a[aria-current] { font-weight: bold; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.summary-card {
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: .5rem;
+  padding: 1rem;
+  text-align: center;
+}
+.summary-card small {
+  display: block;
+  color: var(--pico-muted-color);
+  margin-bottom: .25rem;
+  font-size: .8rem;
+}
+.summary-card strong { font-size: 1.4rem; }
+
+.sim-sidebar { position: sticky; top: 1rem; }
+
+tbody tr:nth-child(even) td,
+tbody tr:nth-child(even) th {
+  background-color: rgba(0, 0, 0, .04);
+}
+
+.price-alert-stale,
+.price-alert-offline {
+  padding: .5rem 1rem;
+  border-radius: .25rem;
+  margin-bottom: 1rem;
+  font-size: .875rem;
+}
+.price-alert-stale {
+  background: var(--pico-color-orange-50, #fff8f0);
+  color: var(--pico-color-orange-700);
+  border: 1px solid var(--pico-color-orange-200, #fcd299);
+}
+.price-alert-offline {
+  background: var(--pico-color-red-50, #fff5f5);
+  color: var(--pico-color-red-700);
+  border: 1px solid var(--pico-color-red-200, #ffc7c7);
+}

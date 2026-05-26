@@ -15,6 +15,12 @@
   {% include "partials/price_header.html" %}
 </div>
 
+{% if prices_unavailable %}
+<article>
+  <p>Dati di portfolio non disponibili: impossibile recuperare le quotazioni. I valori verranno mostrati non appena la connessione sarà ripristinata.</p>
+</article>
+{% else %}
+
 <!-- Riepilogo per tipo -->
 <div class="summary-grid">
   <div class="summary-card">
@@ -23,12 +29,12 @@
     <small>${{ total_value_usd|floatformat:2 }}</small>
   </div>
   <div class="summary-card">
-    <small>ESPP — {{ espp.qty }} azioni</small>
+    <small>ESPP — {{ espp.qty|floatformat:"-4" }} azioni</small>
     <strong>€{{ espp.value_eur|floatformat:2 }}</strong>
     <small>Tasse stimate: €{{ espp.tax_eur|floatformat:2 }}</small>
   </div>
   <div class="summary-card">
-    <small>RSU — {{ rsu.qty }} azioni</small>
+    <small>RSU — {{ rsu.qty|floatformat:"-4" }} azioni</small>
     <strong>€{{ rsu.value_eur|floatformat:2 }}</strong>
     <small>Tasse stimate: €{{ rsu.tax_eur|floatformat:2 }}</small>
   </div>
@@ -60,7 +66,7 @@
   <tr>
     <td>{{ row.lot.plan_type }}</td>
     <td>{{ row.lot.date_acquired }}</td>
-    <td>{{ row.lot.sellable_qty }}</td>
+    <td>{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
     <td>${{ row.lot.cost_basis|floatformat:4 }}</td>
     <td>€{{ row.value_eur|floatformat:2 }}</td>
     <td class="{% if row.gain_usd >= 0 %}gain{% else %}loss{% endif %}">
@@ -83,5 +89,6 @@
 
 <p><a href="/simulate/" role="button">Vai al Simulatore →</a></p>
 
-{% endif %}
+{% endif %}{# prices_unavailable #}
+{% endif %}{# has_lots #}
 {% endblock %}

@@ -1,3 +1,9 @@
+{% if prices_unavailable %}
+<p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
+{% elif prices_stale %}
+<p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
+{% endif %}
+{% if not prices_unavailable %}
 <div class="summary-grid">
   <div class="summary-card">
     <small>AAPL — prezzo live</small>
@@ -9,3 +15,4 @@
     <strong>{{ eur_usd|floatformat:4 }}</strong>
   </div>
 </div>
+{% endif %}
