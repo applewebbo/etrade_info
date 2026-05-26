@@ -61,6 +61,31 @@ class Lot(models.Model):
         return f"{self.symbol} {self.plan_type} {self.date_acquired}"
 
 
+# ── import logic ─────────────────────────────────────────────────────────────
+
+
+def import_lots(lot_data: list[dict], mode: str = "overwrite") -> int:
+    """Import lots from parsed data. Returns number of lots created."""
+    if mode == "overwrite":
+        Lot.objects.all().delete()
+        for data in lot_data:
+            Lot.objects.create(**data)
+        return len(lot_data)
+
+    created = 0
+    for data in lot_data:
+        _, was_created = Lot.objects.get_or_create(
+            symbol=data["symbol"],
+            plan_type=data["plan_type"],
+            date_acquired=data["date_acquired"],
+            cost_basis=data["cost_basis"],
+            defaults={"sellable_qty": data["sellable_qty"], "tax_status": data["tax_status"]},
+        )
+        if was_created:
+            created += 1
+    return created
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -189,9 +214,8 @@ def import_view(request):
                 tmp.write(chunk)
             tmp_path = tmp.name
 
-        Lot.objects.all().delete()
-        for data in parse_sellable_xlsx(tmp_path):
-            Lot.objects.create(**data)
+        mode = request.POST.get("mode", "overwrite")
+        import_lots(parse_sellable_xlsx(tmp_path), mode=mode)
 
         return redirect("/")
 
