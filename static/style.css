@@ -1,4 +1,33 @@
-:root { font-size: 14px; }
+:root {
+  font-size: 14px;
+  --pico-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+
+.site-header {
+  background-color: var(--pico-color-slate-100, #e2e8f0);
+  border-bottom: 1px solid var(--pico-color-slate-200, #cbd5e1);
+  margin-bottom: 0;
+}
+
+.site-brand {
+  display: inline;
+}
+
+.site-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  vertical-align: middle;
+  margin-right: .3rem;
+}
+
+.site-title {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--pico-color-slate-800, #1e293b);
+  vertical-align: middle;
+}
 
 .gain { color: var(--pico-color-green-500); }
 .loss { color: var(--pico-color-red-500); }

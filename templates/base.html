@@ -3,16 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}Stock Tax IT{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <title>{% block title %}Etrade Portfolio{% endblock %}</title>
+    <link rel="stylesheet" href="/static/pico.min.css" />
     <link rel="stylesheet" href="/static/style.css" />
-    <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/static/htmx.min.js" defer></script>
+    <script src="/static/alpine.min.js" defer></script>
   </head>
   <body>
-    <header class="container">
-      <nav>
-        <ul><li><strong>Stock Tax IT</strong></li></ul>
+    <header class="site-header">
+      <nav class="container">
+        <ul><li>
+          <span class="site-brand">
+            <img src="/static/icons/stocks.svg" class="site-icon" alt="" aria-hidden="true" />
+            <span class="site-title">Etrade Portfolio</span>
+          </span>
+        </li></ul>
         <ul>
           <li><a href="/" {% if request.path == "/" %}aria-current="page"{% endif %}>Dashboard</a></li>
           <li><a href="/simulate/" {% if request.path == "/simulate/" %}aria-current="page"{% endif %}>Simulatore</a></li>
