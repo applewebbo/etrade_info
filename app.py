@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import models
+from django.utils import timezone
 from nanodjango import Django
 
 app = Django(
@@ -14,6 +15,8 @@ app = Django(
     ALLOWED_HOSTS=["localhost", "127.0.0.1"],
     LANGUAGE_CODE="it",
     USE_L10N=True,
+    TIME_ZONE="Europe/Rome",
+    USE_TZ=True,
     INSTALLED_APPS=[
         "django.contrib.contenttypes",
         "django.contrib.auth",
@@ -77,6 +80,7 @@ def _portfolio_context():
             "prices_unavailable": True,
             "prices_stale": False,
             "price_direction": "neutral",
+            "last_updated": timezone.localtime().strftime("%H:%M:%S"),
         }
 
     price_eur = price_usd / eur_usd
@@ -133,6 +137,7 @@ def _portfolio_context():
         "prices_stale": prices_stale,
         "prices_unavailable": False,
         "price_direction": get_price_direction("AAPL"),
+        "last_updated": timezone.localtime().strftime("%H:%M:%S"),
     }
 
 
@@ -162,6 +167,7 @@ def prices_fragment(request):
         "prices_stale": prices_stale,
         "prices_unavailable": prices_unavailable,
         "price_direction": get_price_direction("AAPL"),
+        "last_updated": timezone.localtime().strftime("%H:%M:%S"),
     }
     if not prices_unavailable:
         ctx.update({"price_usd": price_usd, "price_eur": price_usd / eur_usd, "eur_usd": eur_usd})

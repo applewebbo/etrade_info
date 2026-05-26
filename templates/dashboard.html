@@ -21,22 +21,22 @@
 
 <!-- Riepilogo per tipo -->
 <div class="summary-grid">
-  <div class="summary-card">
+  <div class="summary-card card-portfolio">
     <small>Portfolio FMV</small>
     <strong>€{{ total_value_eur|floatformat:2 }}</strong>
     <small>${{ total_value_usd|floatformat:2 }}</small>
   </div>
-  <div class="summary-card">
+  <div class="summary-card card-espp">
     <small>ESPP — {{ espp.qty|floatformat:"-4" }} azioni</small>
     <strong>€{{ espp.value_eur|floatformat:2 }}</strong>
     <small>Tasse stimate: €{{ espp.tax_eur|floatformat:2 }}</small>
   </div>
-  <div class="summary-card">
+  <div class="summary-card card-rsu">
     <small>RSU — {{ rsu.qty|floatformat:"-4" }} azioni</small>
     <strong>€{{ rsu.value_eur|floatformat:2 }}</strong>
     <small>Tasse stimate: €{{ rsu.tax_eur|floatformat:2 }}</small>
   </div>
-  <div class="summary-card">
+  <div class="summary-card card-taxes">
     <small>Tasse totali stimate</small>
     <strong>€{{ total_tax_eur|floatformat:2 }}</strong>
     <small>${{ total_tax_usd|floatformat:2 }}</small>

@@ -5,16 +5,18 @@
 {% endif %}
 {% if not prices_unavailable %}
 <div class="summary-grid">
-  <div class="summary-card">
+  <div class="summary-card card-aapl">
     <small>AAPL — prezzo live</small>
     <strong class="{% if price_direction == 'up' %}price-up{% elif price_direction == 'down' %}price-down{% endif %}">
-      ${{ price_usd|floatformat:2 }}
+      ${{ price_usd|floatformat:2 }}{% if price_direction == 'up' %}<span class="price-arrow">▲</span>{% elif price_direction == 'down' %}<span class="price-arrow">▼</span>{% endif %}
     </strong>
     <small>€{{ price_eur|floatformat:2 }}</small>
+    {% if last_updated %}<span class="last-updated">aggiornato alle {{ last_updated }}</span>{% endif %}
   </div>
-  <div class="summary-card">
+  <div class="summary-card card-fx">
     <small>Cambio EUR/USD</small>
     <strong>{{ eur_usd|floatformat:4 }}</strong>
+    {% if last_updated %}<span class="last-updated">aggiornato alle {{ last_updated }}</span>{% endif %}
   </div>
 </div>
 {% endif %}
