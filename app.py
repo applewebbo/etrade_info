@@ -270,6 +270,17 @@ def simulate(request):
     )
 
 
+@app.route("/reset/")
+def reset_view(request):
+    from django.http import HttpResponse
+
+    if request.method == "POST":
+        Lot.objects.all().delete()
+        response = HttpResponse()
+        response["HX-Redirect"] = "/"
+        return response
+
+
 if __name__ == "__main__":
     import sys
 

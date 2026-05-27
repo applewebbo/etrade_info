@@ -1,3 +1,7 @@
+button, [type="submit"], [type="button"], [role="button"] {
+  border-radius: .375rem !important;
+}
+
 :root {
   font-size: 14px;
   --pico-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
@@ -88,6 +92,7 @@ nav ul li a[aria-current] { font-weight: bold; }
 .card-espp      { background: rgba(34, 197, 94, .07);   border-top-color: rgb(34, 197, 94); }
 .card-rsu       { background: rgba(168, 85, 247, .07);  border-top-color: rgb(168, 85, 247); }
 .card-taxes     { background: rgba(249, 115, 22, .07);  border-top-color: rgb(249, 115, 22); }
+.card-danger    { background: rgba(239, 68, 68, .06);   border-top-color: rgb(239, 68, 68); }
 
 .price-up   { color: rgb(22, 163, 74) !important; }
 .price-down { color: rgb(220, 38, 38) !important; }
@@ -138,6 +143,43 @@ nav ul li a[aria-current] { font-weight: bold; }
 }
 .form-actions button {
   width: auto;
+}
+
+/* Settings page */
+section + section { margin-top: 2rem; }
+article.settings-card {
+  border-top-width: 3px !important;
+  border-top-style: solid !important;
+  border-radius: .5rem;
+}
+
+/* Danger zone */
+.danger-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.danger-info {
+  flex: 1;
+}
+.danger-info p {
+  font-size: .875rem;
+  color: var(--pico-muted-color);
+  margin: .25rem 0 0;
+}
+button.danger {
+  background-color: rgb(239, 68, 68) !important;
+  border-color: rgb(239, 68, 68) !important;
+  color: #fff !important;
+  flex-shrink: 0;
+}
+button.danger:hover {
+  background-color: rgb(220, 38, 38) !important;
+  border-color: rgb(220, 38, 38) !important;
+}
+button.danger:focus, button.danger:focus-visible {
+  outline-color: rgb(239, 68, 68) !important;
 }
 
 /* Import form */
@@ -192,7 +234,7 @@ nav ul li a[aria-current] { font-weight: bold; }
 }
 .file-drop:hover {
   border-color: var(--pico-primary);
-  background: var(--pico-primary-background, rgba(99,102,241,.04));
+  background: rgba(99, 102, 241, .04);
 }
 .file-drop-input {
   display: none;
@@ -228,12 +270,8 @@ nav ul li a[aria-current] { font-weight: bold; }
   border-color: var(--pico-primary);
   background: rgba(99, 102, 241, .06);
 }
-.mode-card:has(.mode-radio:checked) .mode-card-title {
-  color: var(--pico-primary);
-}
-.mode-card:has(.mode-radio:checked) .mode-card-desc {
-  color: var(--pico-muted-color);
-}
+.mode-card:has(.mode-radio:checked) .mode-card-title { color: var(--pico-primary); }
+.mode-card:has(.mode-radio:checked) .mode-card-desc  { color: var(--pico-muted-color); }
 .mode-radio {
   margin-top: .15rem;
   flex-shrink: 0;

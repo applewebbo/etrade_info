@@ -23,6 +23,7 @@ version = "0.1.0"
 exclude_dirs = ["tests"]
 
 [tool.pytest.ini_options]
+filterwarnings = ["ignore::UserWarning:django.core.handlers.base"]
 pythonpath = ["."]
 
 [tool.ruff]

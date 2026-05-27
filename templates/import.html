@@ -5,7 +5,7 @@
 <h2>Impostazioni</h2>
 
 <section>
-  <article>
+  <article class="settings-card card-portfolio">
     <h3>Importa portfolio</h3>
     {% if count %}
     <p class="import-status">
@@ -31,14 +31,14 @@
 
         <div class="import-col">
           <p class="import-col-label">Modalità</p>
-          <label class="mode-card" x-data>
+          <label class="mode-card mode-card-overwrite" x-data>
             <input type="radio" name="mode" value="overwrite" checked class="mode-radio" />
             <span class="mode-card-body">
               <span class="mode-card-title">Sovrascrivi</span>
               <span class="mode-card-desc">Elimina tutte le posizioni esistenti e importa il file</span>
             </span>
           </label>
-          <label class="mode-card">
+          <label class="mode-card mode-card-incremental">
             <input type="radio" name="mode" value="incremental" class="mode-radio" />
             <span class="mode-card-body">
               <span class="mode-card-title">Aggiungi</span>
@@ -52,6 +52,21 @@
         <button type="submit">Importa</button>
       </div>
     </form>
+  </article>
+</section>
+
+<section>
+  <article class="settings-card card-danger">
+    <h3>Danger Zone</h3>
+    <div class="danger-row">
+      <div class="danger-info">
+        <strong>Cancella tutte le posizioni</strong>
+        <p>Elimina definitivamente tutti i dati importati dal database. L'operazione non può essere annullata e non è possibile recuperare i dati. Sarà necessario eseguire un nuovo import per ripristinare il portfolio.</p>
+      </div>
+      <button class="danger"
+              hx-post="/reset/"
+              hx-confirm="Sei sicuro? Tutte le posizioni verranno eliminate definitivamente e non sarà possibile recuperarle.">Cancella tutto</button>
+    </div>
   </article>
 </section>
 
