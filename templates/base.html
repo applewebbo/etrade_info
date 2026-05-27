@@ -5,22 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Etrade Portfolio{% endblock %}</title>
     <link rel="stylesheet" href="/static/pico.min.css" />
+    <link rel="stylesheet" href="/static/pico.colors.min.css" />
     <link rel="stylesheet" href="/static/style.css" />
     <script src="/static/htmx.min.js" defer></script>
     <script src="/static/alpine.min.js" defer></script>
   </head>
-  <body>
+  <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% csrf_token %}
     <header class="site-header">
       <nav class="container">
         <ul><li>
-          <span class="site-brand">
+          <a href="/" class="site-brand">
             <img src="/static/icons/stocks.svg" class="site-icon" alt="" aria-hidden="true" />
             <span class="site-title">Etrade Portfolio</span>
-          </span>
+          </a>
         </li></ul>
         <ul>
           <li><a href="/" {% if request.path == "/" %}aria-current="page"{% endif %}>Dashboard</a></li>
-          <li><a href="/simulate/" {% if request.path == "/simulate/" %}aria-current="page"{% endif %}>Simulatore</a></li>
+          <li><a href="/simulate/" {% if request.path == "/simulate/" %}aria-current="page"{% endif %}>Vendita</a></li>
           <li><a href="/import/" {% if request.path == "/import/" %}aria-current="page"{% endif %}>Impostazioni</a></li>
         </ul>
       </nav>

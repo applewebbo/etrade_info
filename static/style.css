@@ -8,8 +8,8 @@ button, [type="submit"], [type="button"], [role="button"] {
 }
 
 .site-header {
-  background-color: var(--pico-color-slate-100, #e2e8f0);
-  border-bottom: 1px solid var(--pico-color-slate-200, #cbd5e1);
+  background-color: var(--pico-color-slate-100);
+  border-bottom: 1px solid var(--pico-color-slate-200);
   margin-bottom: 0;
 }
 
@@ -19,7 +19,11 @@ body > main {
 
 .site-brand {
   display: inline;
+  text-decoration: none !important;
+  color: inherit !important;
 }
+
+.text-right { text-align: right; }
 
 .site-icon {
   width: 1.6rem;
@@ -33,7 +37,7 @@ body > main {
   font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--pico-color-slate-800, #1e293b);
+  color: var(--pico-color-slate-800);
   vertical-align: middle;
 }
 
@@ -41,14 +45,14 @@ body > main {
 .loss { color: var(--pico-color-red-500); }
 
 .badge-long {
-  background: var(--pico-color-green-100);
-  color: var(--pico-color-green-700);
+  background: var(--pico-color-jade-50);
+  color: var(--pico-color-jade-700);
   padding: .1rem .4rem;
   border-radius: .25rem;
   font-size: .75rem;
 }
 .badge-short {
-  background: var(--pico-color-orange-100);
+  background: var(--pico-color-orange-50);
   color: var(--pico-color-orange-700);
   padding: .1rem .4rem;
   border-radius: .25rem;
@@ -86,16 +90,16 @@ nav ul li a[aria-current] { font-weight: bold; }
   padding: 1.25rem 1.25rem 1rem;
   text-align: center;
 }
-.card-aapl      { background: rgba(59, 130, 246, .07);  border-top-color: rgb(59, 130, 246); }
-.card-fx        { background: rgba(20, 184, 166, .07);  border-top-color: rgb(20, 184, 166); }
-.card-portfolio { background: rgba(99, 102, 241, .07);  border-top-color: rgb(99, 102, 241); }
-.card-espp      { background: rgba(34, 197, 94, .07);   border-top-color: rgb(34, 197, 94); }
-.card-rsu       { background: rgba(168, 85, 247, .07);  border-top-color: rgb(168, 85, 247); }
-.card-taxes     { background: rgba(249, 115, 22, .07);  border-top-color: rgb(249, 115, 22); }
-.card-danger    { background: rgba(239, 68, 68, .06);   border-top-color: rgb(239, 68, 68); }
+.card-aapl      { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-blue-500); }
+.card-fx        { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-cyan-500); }
+.card-portfolio { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-indigo-500); }
+.card-espp      { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-jade-500); }
+.card-rsu       { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-purple-500); }
+.card-taxes     { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-orange-500); }
+.card-danger    { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-red-500); }
 
-.price-up   { color: rgb(22, 163, 74) !important; }
-.price-down { color: rgb(220, 38, 38) !important; }
+.price-up   { color: var(--pico-color-green-600) !important; }
+.price-down { color: var(--pico-color-red-600) !important; }
 .price-arrow { font-size: .9rem; margin-left: .15rem; }
 
 .summary-card small {
@@ -134,7 +138,66 @@ nav ul li a[aria-current] { font-weight: bold; }
   animation: card-flash .6s ease-out;
 }
 
+.sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .sim-grid { grid-template-columns: 1fr; }
+}
+.sim-left { display: flex; flex-direction: column; gap: 1.25rem; }
 .sim-sidebar { position: sticky; top: 1rem; }
+.sim-table-card figure { margin: .75rem 0 0; overflow-x: auto; }
+.sim-table-card table { margin: 0; }
+.sim-result-area { margin: 1rem 0; }
+.sim-result-placeholder { color: var(--pico-muted-color); font-size: .875rem; }
+.qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  vertical-align: middle;
+}
+.qty-input {
+  width: 70px !important;
+  min-width: 0;
+  margin: 0 !important;
+  height: 2.25rem !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  flex-shrink: 0;
+}
+.qty-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  height: 2.25rem !important;
+  padding: 0 .65rem !important;
+  font-size: .8rem !important;
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+.qty-controls .qty-btn:first-of-type {
+  margin-left: .6rem !important;
+}
+.card-espp .qty-btn {
+  background-color: var(--pico-color-jade-50) !important;
+  border-color: var(--pico-color-jade-500) !important;
+  color: var(--pico-color-jade-700) !important;
+}
+.card-espp .qty-btn:hover {
+  background-color: var(--pico-color-jade-100) !important;
+}
+.card-rsu .qty-btn {
+  background-color: var(--pico-color-purple-50) !important;
+  border-color: var(--pico-color-purple-500) !important;
+  color: var(--pico-color-purple-700) !important;
+}
+.card-rsu .qty-btn:hover {
+  background-color: var(--pico-color-purple-100) !important;
+}
 
 .form-actions {
   display: flex;
@@ -143,6 +206,65 @@ nav ul li a[aria-current] { font-weight: bold; }
 }
 .form-actions button {
   width: auto;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 8rem);
+}
+.empty-state-body {
+  text-align: center;
+  max-width: 28rem;
+}
+.empty-state-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: .75rem;
+}
+.empty-state-body h2 {
+  margin-bottom: .5rem;
+}
+.empty-state-body p {
+  color: var(--pico-muted-color);
+  margin-bottom: 1.5rem;
+}
+.empty-state-body [role="button"] {
+  display: inline-block;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal-box {
+  background: var(--pico-card-background-color);
+  border-radius: .75rem;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 28rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.modal-close {
+  padding: .25rem .6rem;
+  font-size: .85rem;
+  line-height: 1;
+  width: auto;
+  margin: 0;
 }
 
 /* Settings page */
@@ -169,17 +291,17 @@ article.settings-card {
   margin: .25rem 0 0;
 }
 button.danger {
-  background-color: rgb(239, 68, 68) !important;
-  border-color: rgb(239, 68, 68) !important;
+  background-color: var(--pico-color-red-500) !important;
+  border-color: var(--pico-color-red-500) !important;
   color: #fff !important;
   flex-shrink: 0;
 }
 button.danger:hover {
-  background-color: rgb(220, 38, 38) !important;
-  border-color: rgb(220, 38, 38) !important;
+  background-color: var(--pico-color-red-600) !important;
+  border-color: var(--pico-color-red-600) !important;
 }
 button.danger:focus, button.danger:focus-visible {
-  outline-color: rgb(239, 68, 68) !important;
+  outline-color: var(--pico-color-red-500) !important;
 }
 
 /* Import form */
@@ -196,7 +318,7 @@ button.danger:focus, button.danger:focus-visible {
   width: .5rem;
   height: .5rem;
   border-radius: 50%;
-  background: var(--pico-color-green-500, #22c55e);
+  background: var(--pico-color-green-500);
   flex-shrink: 0;
 }
 
@@ -234,7 +356,7 @@ button.danger:focus, button.danger:focus-visible {
 }
 .file-drop:hover {
   border-color: var(--pico-primary);
-  background: rgba(99, 102, 241, .04);
+  background: var(--pico-color-indigo-50);
 }
 .file-drop-input {
   display: none;
@@ -268,7 +390,7 @@ button.danger:focus, button.danger:focus-visible {
 .mode-card:last-child { margin-bottom: 0; }
 .mode-card:has(.mode-radio:checked) {
   border-color: var(--pico-primary);
-  background: rgba(99, 102, 241, .06);
+  background: var(--pico-color-indigo-50);
 }
 .mode-card:has(.mode-radio:checked) .mode-card-title { color: var(--pico-primary); }
 .mode-card:has(.mode-radio:checked) .mode-card-desc  { color: var(--pico-muted-color); }
@@ -294,6 +416,14 @@ tbody tr:nth-child(even) td,
 tbody tr:nth-child(even) th {
   background-color: rgba(0, 0, 0, .04);
 }
+.sim-table-card tbody tr td,
+.sim-table-card tbody tr th {
+  background-color: var(--pico-card-background-color);
+}
+.sim-table-card tbody tr:nth-child(even) td,
+.sim-table-card tbody tr:nth-child(even) th {
+  background-color: var(--pico-color-slate-50);
+}
 
 .price-alert-stale,
 .price-alert-offline {
@@ -303,12 +433,12 @@ tbody tr:nth-child(even) th {
   font-size: .875rem;
 }
 .price-alert-stale {
-  background: var(--pico-color-orange-50, #fff8f0);
+  background: var(--pico-color-orange-50);
   color: var(--pico-color-orange-700);
-  border: 1px solid var(--pico-color-orange-200, #fcd299);
+  border: 1px solid var(--pico-color-orange-200);
 }
 .price-alert-offline {
-  background: var(--pico-color-red-50, #fff5f5);
+  background: var(--pico-color-red-50);
   color: var(--pico-color-red-700);
-  border: 1px solid var(--pico-color-red-200, #ffc7c7);
+  border: 1px solid var(--pico-color-red-200);
 }

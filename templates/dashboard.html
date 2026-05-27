@@ -3,9 +3,40 @@
 {% block content %}
 
 {% if not has_lots %}
-<article>
-  <p>Nessun lotto importato. <a href="/import/">Importa il file XLSX da E*TRADE</a>.</p>
-</article>
+<div class="empty-state" x-data="{ open: false }">
+  <div class="empty-state-body">
+    <p class="empty-state-icon">📂</p>
+    <h2>Nessuna posizione caricata</h2>
+    <p>Importa il file <strong>ByStatus_expanded.xlsx</strong> esportato da E*TRADE per visualizzare il tuo portfolio.</p>
+    <button @click="open = true">Carica il file XLSX</button>
+  </div>
+
+  <!-- Modale import -->
+  <div class="modal-backdrop" x-show="open" x-transition.opacity @click.self="open = false">
+    <div class="modal-box" @click.stop>
+      <header class="modal-header">
+        <strong>Importa portfolio</strong>
+        <button class="modal-close secondary outline" @click="open = false" aria-label="Chiudi">✕</button>
+      </header>
+      <p>Carica il file <strong>ByStatus_expanded.xlsx</strong> esportato da E*TRADE. Verranno letti i lotti dalla sheet <em>Sellable</em>.</p>
+      <form method="post" action="/import/" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="overwrite" />
+        <label class="file-drop" x-data="{ name: '' }">
+          <input type="file" name="xlsx" accept=".xlsx" required
+                 x-on:change="name = $event.target.files[0]?.name ?? ''"
+                 class="file-drop-input" />
+          <span class="file-drop-icon">📂</span>
+          <span class="file-drop-hint" x-text="name || 'ByStatus_expanded.xlsx'"></span>
+          <span class="file-drop-sub">Clicca per selezionare il file</span>
+        </label>
+        <div class="form-actions">
+          <button type="submit">Importa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% else %}
 
 <!-- Price header — aggiornato via HTMX ogni 60s -->
@@ -43,7 +74,7 @@
   </div>
 </div>
 
-<!-- Tabella lotti -->
+<!-- Tabella posizioni -->
 <div class="table-card">
 <figure>
 <table>
@@ -64,7 +95,7 @@
   {% for row in rows %}
   <tr>
     <td>{{ row.lot.plan_type }}</td>
-    <td>{{ row.lot.date_acquired }}</td>
+    <td>{{ row.lot.date_acquired|date:"d/m/Y" }}</td>
     <td>{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
     <td>${{ row.lot.cost_basis|floatformat:4 }}</td>
     <td>€{{ row.value_eur|floatformat:2 }}</td>
@@ -87,7 +118,7 @@
 </figure>
 </div>
 
-<p><a href="/simulate/" role="button">Vai al Simulatore →</a></p>
+<p class="text-right"><a href="/simulate/" role="button">Vai al simulatore vendita →</a></p>
 
 {% endif %}{# prices_unavailable #}
 {% endif %}{# has_lots #}

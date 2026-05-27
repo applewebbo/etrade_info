@@ -230,6 +230,10 @@ def simulate(request):
     from tax_engine import calculate_sale_result
 
     lots = list(Lot.objects.all())
+    plan_groups = [
+        ("ESPP", [lot for lot in lots if lot.plan_type == Lot.ESPP], "card-espp"),
+        ("RSU", [lot for lot in lots if lot.plan_type == Lot.RSU], "card-rsu"),
+    ]
     price_usd = get_stock_price_usd()
     eur_usd = get_eur_usd_rate()
     prices_stale = is_price_stale("AAPL") or is_price_stale("EURUSD=X")
@@ -262,6 +266,7 @@ def simulate(request):
         "simulate.html",
         {
             "lots": lots,
+            "plan_groups": plan_groups,
             "price_usd": price_usd,
             "price_eur": price_eur,
             "prices_stale": prices_stale,

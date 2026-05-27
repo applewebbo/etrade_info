@@ -5,86 +5,100 @@
 <h2>Simulatore vendita</h2>
 
 {% if not lots %}
-<article><p>Nessun lotto. <a href="/import/">Importa prima il file XLSX</a>.</p></article>
+<article><p>Nessuna posizione. <a href="/import/">Importa prima il file XLSX</a>.</p></article>
 {% else %}
 
-<div style="display:grid; grid-template-columns: 1fr 380px; gap: 2rem; align-items: start;">
+<form id="sim-form"
+      hx-post="/simulate/"
+      hx-target="#sim-result"
+      hx-trigger="change delay:300ms, submit"
+      hx-swap="innerHTML">
+  {% csrf_token %}
 
-  <!-- Sinistra: form lotti -->
-  <div>
-    <form id="sim-form"
-          hx-post="/simulate/"
-          hx-target="#sim-result"
-          hx-trigger="change delay:300ms, submit"
-          hx-swap="innerHTML">
-      {% csrf_token %}
+  <div class="sim-grid">
 
-      {% if prices_unavailable %}
-      <p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
-      {% elif prices_stale %}
-      <p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
+    <!-- Colonna sinistra: tabelle per tipo -->
+    <div class="sim-left">
+      {% for group_label, group_lots, card_class in plan_groups %}
+      {% if group_lots %}
+      <article class="settings-card {{ card_class }} sim-table-card">
+        <h3>{{ group_label }}</h3>
+        <figure>
+        <table>
+          <thead>
+            <tr>
+              <th>Data acquisto</th>
+              <th>Costo acquisto</th>
+              <th>Disponibili</th>
+              <th>Periodo</th>
+              <th>Qtà da vendere</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for lot in group_lots %}
+          <tr>
+            <td>{{ lot.date_acquired|date:"d/m/Y" }}</td>
+            <td>${{ lot.cost_basis|floatformat:4 }}</td>
+            <td>{{ lot.sellable_qty|floatformat:"-4" }}</td>
+            <td>
+              {% if lot.tax_status == "Long Term" %}
+                <span class="badge-long">Long</span>
+              {% else %}
+                <span class="badge-short">Short</span>
+              {% endif %}
+            </td>
+            <td x-data="{ qty: 0, max: {{ lot.sellable_qty|floatformat:'4u' }}, set(v){ this.qty=v; this.$nextTick(()=>this.$refs.q.dispatchEvent(new Event('change',{bubbles:true}))) } }">
+              <div class="qty-controls">
+                <input x-ref="q" type="number" name="qty_{{ lot.pk }}"
+                       x-model.number="qty" min="0" :max="max" step="0.001"
+                       class="qty-input" />
+                <button type="button" class="qty-btn" @click="set(Math.max(qty-1,0))">-1</button>
+                <button type="button" class="qty-btn" @click="set(Math.min(qty+1,max))">+1</button>
+                <button type="button" class="qty-btn" @click="set(max)">Tutte</button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        </figure>
+      </article>
       {% endif %}
-      <fieldset>
+      {% endfor %}
+    </div>
+
+    <!-- Colonna destra: prezzo + risultato -->
+    <div class="sim-sidebar">
+      <article class="settings-card card-portfolio">
+        <h3>Simulazione</h3>
+
+        {% if prices_unavailable %}
+        <p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
+        {% elif prices_stale %}
+        <p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
+        {% endif %}
+
         <label>
           Prezzo vendita (USD)
           <input type="number" name="sale_price" step="0.01" min="0"
-                 value="{{ price_usd|floatformat:2 }}"
-                 placeholder="Prezzo vendita USD" />
+                 value="{{ price_usd|floatformat:'2u' }}"
+                 placeholder="{% if prices_unavailable %}Prezzo non disponibile{% else %}Prezzo vendita USD{% endif %}" />
         </label>
         {% if not prices_unavailable %}
         <small>Prezzo live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }})</small>
         {% endif %}
-      </fieldset>
 
-      <figure>
-      <table>
-        <thead>
-          <tr>
-            <th>Tipo</th>
-            <th>Data</th>
-            <th>Cost basis</th>
-            <th>Disponibili</th>
-            <th>Status</th>
-            <th>Qty da vendere</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for lot in lots %}
-        <tr>
-          <td>{{ lot.plan_type }}</td>
-          <td>{{ lot.date_acquired }}</td>
-          <td>${{ lot.cost_basis|floatformat:4 }}</td>
-          <td>{{ lot.sellable_qty|floatformat:"-4" }}</td>
-          <td>
-            {% if lot.tax_status == "Long Term" %}
-              <span class="badge-long">Long</span>
-            {% else %}
-              <span class="badge-short">Short</span>
-            {% endif %}
-          </td>
-          <td>
-            <input type="number" name="qty_{{ lot.pk }}"
-                   min="0" max="{{ lot.sellable_qty }}"
-                   step="0.001" value="0"
-                   style="width: 100px;" />
-          </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-      </figure>
+        <div id="sim-result" class="sim-result-area">
+          <p class="sim-result-placeholder">Inserisci le quantità da vendere per vedere il calcolo.</p>
+        </div>
 
-      <button type="submit">Calcola tasse</button>
-    </form>
-  </div>
-
-  <!-- Destra: risultato sticky -->
-  <div class="sim-sidebar">
-    <div id="sim-result">
-      <article><p>Inserisci le quantità da vendere per vedere il calcolo.</p></article>
+        <div class="form-actions">
+          <button type="submit">Calcola tasse</button>
+        </div>
+      </article>
     </div>
-  </div>
 
-</div>
+  </div>
+</form>
 {% endif %}
 {% endblock %}
