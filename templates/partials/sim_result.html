@@ -22,7 +22,7 @@
   </table>
   {% if result.per_lot %}
   <details>
-    <summary>Dettaglio per lotto ({{ result.per_lot|length }})</summary>
+    <summary>Dettaglio per posizione ({{ result.per_lot|length }})</summary>
     <table>
       <thead><tr><th>Tipo</th><th>Data</th><th>Qty</th><th>Cost basis</th><th>Gain/Loss</th></tr></thead>
       <tbody>
@@ -42,5 +42,5 @@
   {% endif %}
 </article>
 {% else %}
-<article><p>Seleziona almeno un lotto per vedere il calcolo.</p></article>
+<article><p>Seleziona almeno una posizione per vedere il calcolo.</p></article>
 {% endif %}
