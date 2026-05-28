@@ -56,6 +56,19 @@
 </section>
 
 <section>
+  <article class="settings-card card-export">
+    <h3>Esporta portfolio</h3>
+    <div class="export-row">
+      <div class="export-info">
+        <strong>Scarica le posizioni in formato XLSX</strong>
+        <p>Genera un file compatibile con il formato di importazione E*TRADE con tutte le posizioni attualmente caricate nel database.</p>
+      </div>
+      <a href="/export/" role="button" {% if not count %}aria-disabled="true"{% endif %}>Esporta</a>
+    </div>
+  </article>
+</section>
+
+<section>
   <article class="settings-card card-danger">
     <h3>Danger Zone</h3>
     <div class="danger-row">

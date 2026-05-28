@@ -96,6 +96,7 @@ nav ul li a[aria-current] { font-weight: bold; }
 .card-espp      { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-jade-500); }
 .card-rsu       { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-purple-500); }
 .card-taxes     { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-orange-500); }
+.card-export    { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-teal-500); }
 .card-danger    { background: var(--pico-color-grey-50); border-top-color: var(--pico-color-red-500); }
 
 .price-up   { color: var(--pico-color-green-600) !important; }
@@ -301,6 +302,22 @@ article.settings-card {
   border-top-width: 3px !important;
   border-top-style: solid !important;
   border-radius: .5rem;
+}
+
+/* Export card */
+.export-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+.export-info {
+  flex: 1;
+}
+.export-info p {
+  font-size: .875rem;
+  color: var(--pico-muted-color);
+  margin: .25rem 0 0;
 }
 
 /* Danger zone */

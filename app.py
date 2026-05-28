@@ -276,6 +276,51 @@ def simulate(request):
     )
 
 
+@app.route("/export/")
+def export_view(request):
+    import io
+
+    import pandas as pd
+    from django.http import HttpResponse
+
+    lots = list(Lot.objects.all())
+    rows = [
+        {
+            "Record Type": "Detail",
+            "Symbol": lot.symbol,
+            "Plan Type": "Rest. Stock" if lot.plan_type == Lot.RSU else lot.plan_type,
+            "Date Acquired": lot.date_acquired.strftime("%m/%d/%Y"),
+            "Sellable Qty.": float(lot.sellable_qty),
+            "Est. Cost Basis (per share):": float(lot.cost_basis),
+            "Tax Status.1": lot.tax_status,
+        }
+        for lot in lots
+    ]
+    df = pd.DataFrame(
+        rows,
+        columns=[
+            "Record Type",
+            "Symbol",
+            "Plan Type",
+            "Date Acquired",
+            "Sellable Qty.",
+            "Est. Cost Basis (per share):",
+            "Tax Status.1",
+        ],
+    )
+
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Sellable", index=False)
+    buf.seek(0)
+
+    response = HttpResponse(
+        buf.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="portfolio_export.xlsx"'
+    return response
+
+
 @app.route("/reset/")
 def reset_view(request):
     from django.http import HttpResponse
