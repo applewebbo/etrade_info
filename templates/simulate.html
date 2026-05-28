@@ -11,7 +11,8 @@
 <form id="sim-form"
       hx-post="/simulate/"
       hx-target="#sim-result"
-      hx-trigger="change delay:300ms, submit"
+      hx-trigger="change delay:300ms"
+      hx-indicator="#sim-spinner"
       hx-swap="innerHTML">
   {% csrf_token %}
 
@@ -88,12 +89,11 @@
         <small>Prezzo live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }})</small>
         {% endif %}
 
-        <div id="sim-result" class="sim-result-area">
-          <p class="sim-result-placeholder">Inserisci le quantità da vendere per vedere il calcolo.</p>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit">Calcola tasse</button>
+        <div class="sim-result-area">
+          <div id="sim-spinner" class="sim-spinner htmx-indicator"></div>
+          <div id="sim-result">
+            <p class="sim-result-placeholder">Inserisci le quantità da vendere per vedere il calcolo.</p>
+          </div>
         </div>
       </article>
     </div>
