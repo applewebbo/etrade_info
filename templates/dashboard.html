@@ -95,7 +95,7 @@
   {% for row in rows %}
   <tr>
     <td>{{ row.lot.plan_type }}</td>
-    <td>{{ row.lot.date_acquired|date:"d/m/Y" }}</td>
+    <td>{{ row.lot.date_acquired|date:"d/m/y" }}</td>
     <td>{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
     <td>${{ row.lot.cost_basis|floatformat:4 }}</td>
     <td>€{{ row.value_eur|floatformat:2 }}</td>

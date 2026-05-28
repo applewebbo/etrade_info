@@ -151,7 +151,14 @@ nav ul li a[aria-current] { font-weight: bold; }
 .sim-sidebar { position: sticky; top: 1rem; }
 .sim-table-card figure { margin: .75rem 0 0; overflow-x: auto; }
 .sim-table-card table { margin: 0; }
-.sim-result-area { margin: 1rem 0; }
+.sim-live-info {
+  font-size: .72rem;
+  color: var(--pico-muted-color);
+  display: block;
+  margin-top: .15rem;
+}
+label:has(.sim-live-info) { margin-bottom: .5rem !important; }
+.sim-result-area { margin: .5rem 0 1rem; }
 .sim-result-placeholder { color: var(--pico-muted-color); font-size: .875rem; }
 
 .sim-spinner {
@@ -445,6 +452,47 @@ tbody tr:nth-child(even) th {
 .sim-table-card tbody tr:nth-child(even) th {
   background-color: var(--pico-color-slate-50);
 }
+
+/* Sim result detail panel */
+.sim-summary-card {
+  margin-bottom: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.sim-summary-card > header {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: var(--pico-spacing, 1rem);
+  padding-right: var(--pico-spacing, 1rem);
+}
+.sim-detail {
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-top: none;
+  border-bottom-left-radius: var(--pico-border-radius, .5rem);
+  border-bottom-right-radius: var(--pico-border-radius, .5rem);
+  overflow: hidden;
+}
+.sim-detail-label {
+  font-size: .7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--pico-muted-color);
+  padding: .5rem 1rem .25rem;
+  margin: 0;
+}
+.sim-detail figure { margin: 0; overflow-x: auto; }
+.sim-detail table { margin: 0; }
+.sim-detail td, .sim-detail th,
+.sim-summary-card td, .sim-summary-card th {
+  padding-top: .4rem !important;
+  padding-bottom: .4rem !important;
+}
+.sim-row-espp td { background-color: var(--pico-color-jade-50) !important; }
+.sim-row-rsu  td { background-color: var(--pico-color-purple-50) !important; }
 
 .price-alert-stale,
 .price-alert-offline {

@@ -269,6 +269,7 @@ def simulate(request):
             "plan_groups": plan_groups,
             "price_usd": price_usd,
             "price_eur": price_eur,
+            "eur_usd": eur_usd,
             "prices_stale": prices_stale,
             "prices_unavailable": prices_unavailable,
         },

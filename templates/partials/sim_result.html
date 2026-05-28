@@ -1,18 +1,16 @@
 {% if result %}
-<article>
+<article class="sim-summary-card">
   <header><strong>Risultato simulazione</strong> — vendita a ${{ sale_price|floatformat:2 }}</header>
   <table>
     <tr><th>Ricavo lordo</th>
         <td>${{ result.gross_proceeds_usd|floatformat:2 }}</td>
         <td>€{{ result.gross_proceeds_eur|floatformat:2 }}</td></tr>
-    <tr><th>Cost basis totale</th>
+    <tr><th>Costo acquisto totale</th>
         <td>${{ result.total_cost_basis_usd|floatformat:2 }}</td>
         <td>€{{ result.total_cost_basis_eur|floatformat:2 }}</td></tr>
     <tr><th>Plusvalenza netta</th>
-        <td class="{% if result.net_gain_usd >= 0 %}gain{% else %}loss{% endif %}">
-          ${{ result.net_gain_usd|floatformat:2 }}</td>
-        <td class="{% if result.net_gain_eur >= 0 %}gain{% else %}loss{% endif %}">
-          €{{ result.net_gain_eur|floatformat:2 }}</td></tr>
+        <td>${{ result.net_gain_usd|floatformat:2 }}</td>
+        <td>€{{ result.net_gain_eur|floatformat:2 }}</td></tr>
     <tr><th><strong>Imposta (26%)</strong></th>
         <td><strong>${{ result.tax_usd|floatformat:2 }}</strong></td>
         <td><strong>€{{ result.tax_eur|floatformat:2 }}</strong></td></tr>
@@ -20,27 +18,27 @@
         <td>${{ result.net_after_tax_usd|floatformat:2 }}</td>
         <td>€{{ result.net_after_tax_eur|floatformat:2 }}</td></tr>
   </table>
-  {% if result.per_lot %}
-  <details>
-    <summary>Dettaglio per posizione ({{ result.per_lot|length }})</summary>
-    <table>
-      <thead><tr><th>Tipo</th><th>Data</th><th>Qty</th><th>Cost basis</th><th>Gain/Loss</th></tr></thead>
-      <tbody>
-      {% for entry in result.per_lot %}
-      <tr>
-        <td>{{ entry.lot.plan_type }}</td>
-        <td>{{ entry.lot.date_acquired }}</td>
-        <td>{{ entry.qty }}</td>
-        <td>${{ entry.lot.cost_basis|floatformat:4 }}</td>
-        <td class="{% if entry.gain_usd >= 0 %}gain{% else %}loss{% endif %}">
-          ${{ entry.gain_usd|floatformat:2 }}</td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </details>
-  {% endif %}
 </article>
+{% if result.per_lot %}
+<div class="sim-detail">
+  <p class="sim-detail-label">Dettaglio per posizione</p>
+  <figure>
+  <table>
+    <thead><tr><th>Data</th><th>Qtà</th><th>Costo acquisto</th><th>Plusvalenza</th></tr></thead>
+    <tbody>
+    {% for entry in result.per_lot %}
+    <tr class="sim-row-{% if entry.lot.plan_type == 'ESPP' %}espp{% else %}rsu{% endif %}">
+      <td>{{ entry.lot.date_acquired|date:"d/m/y" }}</td>
+      <td>{{ entry.qty }}</td>
+      <td>${{ entry.lot.cost_basis|floatformat:4 }}</td>
+      <td>${{ entry.gain_usd|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </figure>
+</div>
+{% endif %}
 {% else %}
 <article><p>Seleziona almeno una posizione per vedere il calcolo.</p></article>
 {% endif %}

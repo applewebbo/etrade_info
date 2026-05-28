@@ -38,7 +38,7 @@
           <tbody>
           {% for lot in group_lots %}
           <tr>
-            <td>{{ lot.date_acquired|date:"d/m/Y" }}</td>
+            <td>{{ lot.date_acquired|date:"d/m/y" }}</td>
             <td>${{ lot.cost_basis|floatformat:4 }}</td>
             <td>{{ lot.sellable_qty|floatformat:"-4" }}</td>
             <td>
@@ -84,10 +84,10 @@
           <input type="number" name="sale_price" step="0.01" min="0"
                  value="{{ price_usd|floatformat:'2u' }}"
                  placeholder="{% if prices_unavailable %}Prezzo non disponibile{% else %}Prezzo vendita USD{% endif %}" />
+          {% if not prices_unavailable %}
+          <small class="sim-live-info">AAPL live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }}) · EUR/USD {{ eur_usd|floatformat:4 }}</small>
+          {% endif %}
         </label>
-        {% if not prices_unavailable %}
-        <small>Prezzo live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }})</small>
-        {% endif %}
 
         <div class="sim-result-area">
           <div id="sim-spinner" class="sim-spinner htmx-indicator"></div>
