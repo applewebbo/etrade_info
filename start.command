@@ -28,7 +28,14 @@ fi
 export ETRADE_SECRET_KEY
 ETRADE_SECRET_KEY="$(cat "$SECRET_KEY_FILE")"
 
-# ── 3. Crea/aggiorna l'ambiente virtuale ──────────────────────────────────────
+# ── 3. Libera la porta 8000 se occupata da un'istanza precedente ──────────────
+if lsof -ti :8000 &>/dev/null; then
+    echo "Chiusura istanza precedente sulla porta 8000..."
+    lsof -ti :8000 | xargs kill -9 2>/dev/null || true
+    sleep 2
+fi
+
+# ── 4. Crea/aggiorna l'ambiente virtuale ──────────────────────────────────────
 if [ ! -d ".venv" ]; then
     echo "Prima configurazione: installazione dipendenze (può richiedere 1-2 minuti)..."
     uv sync
@@ -36,13 +43,13 @@ else
     uv sync --quiet
 fi
 
-# ── 4. Migrazioni database (idempotente) ──────────────────────────────────────
+# ── 5. Migrazioni database (idempotente) ──────────────────────────────────────
 uv run python app.py migrate --run-syncdb 2>/dev/null || true
 
-# ── 5. Apri il browser dopo 2 secondi ────────────────────────────────────────
+# ── 6. Apri il browser dopo 2 secondi ────────────────────────────────────────
 (sleep 2 && open http://127.0.0.1:8000) &
 
-# ── 6. Avvia il server ────────────────────────────────────────────────────────
+# ── 7. Avvia il server ────────────────────────────────────────────────────────
 echo ""
 echo "✓ App in esecuzione su http://127.0.0.1:8000"
 echo "  Dati in: $ETRADE_DATA_DIR"
