@@ -1,17 +1,21 @@
+import os
 from decimal import Decimal
+from pathlib import Path
 
 from django.db import models
 from django.utils import timezone
 from nanodjango import Django
 
+_db_path = Path(os.environ.get("ETRADE_DATA_DIR", ".")) / "db.sqlite3"
+
 app = Django(
     DATABASES={
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": "db.sqlite3",
+            "NAME": str(_db_path),
         }
     },
-    SECRET_KEY="local-dev-only-not-for-production",  # nosec B106
+    SECRET_KEY=os.environ.get("ETRADE_SECRET_KEY", "local-dev-only-not-for-production"),  # nosec B106
     ALLOWED_HOSTS=["localhost", "127.0.0.1"],
     LANGUAGE_CODE="it",
     USE_L10N=True,
