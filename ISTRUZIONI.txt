@@ -1,0 +1,53 @@
+Etrade Portfolio — Istruzioni per l'uso
+========================================
+
+REQUISITI
+---------
+- macOS (qualsiasi versione recente)
+- Connessione internet al primo avvio e per i prezzi live
+
+INSTALLAZIONE E PRIMO AVVIO
+----------------------------
+1. Copia la cartella "Etrade Portfolio" dove preferisci (es. Documenti)
+2. Doppio clic su "start.command"
+
+   Se macOS blocca l'apertura:
+   tasto destro su start.command → Apri → Apri
+
+   Al primo avvio lo script installa automaticamente uv (gestore
+   Python) e le dipendenze (~1-2 minuti). I lanci successivi sono
+   molto più veloci.
+
+3. Il browser si apre automaticamente su http://127.0.0.1:8000
+4. Vai su Impostazioni → Importa portfolio per caricare il file
+   ByStatus_expanded.xlsx esportato da E*TRADE
+
+AVVII SUCCESSIVI
+----------------
+Doppio clic su "start.command" — il browser si apre dopo ~2 secondi.
+
+DATI
+----
+I dati del portfolio sono salvati in ~/.etrade_info/db.sqlite3
+(cartella nascosta nella tua home). Non vengono toccati dagli
+aggiornamenti dell'app.
+
+AGGIORNAMENTI
+-------------
+Sostituisci il contenuto della cartella "Etrade Portfolio" con la
+nuova versione. I tuoi dati rimangono intatti.
+
+PREZZI
+------
+L'app richiede internet per aggiornare i prezzi AAPL e EUR/USD.
+Senza connessione il portfolio è visibile, ma senza valori aggiornati.
+
+CHIUSURA
+--------
+Premi Cmd+C nella finestra del Terminale, oppure chiudi il Terminale.
+Chiudere solo il browser NON ferma il server.
+
+DISINSTALLAZIONE
+----------------
+Doppio clic su "uninstall.command" per rimuovere dati e ambiente
+virtuale, poi elimina manualmente la cartella "Etrade Portfolio".

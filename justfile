@@ -117,3 +117,27 @@ issue-label number *labels:
 [group('codeberg')]
 issue-create title body="":
     ./bin/codeberg create "{{ title }}" "{{ body }}"
+
+
+##########################################################################
+# Distribution
+##########################################################################
+
+# Build minimal distribution zip for end users
+[group('distribution')]
+dist:
+    #!/usr/bin/env bash
+    set -e
+    ROOT="$(pwd)"
+    rm -rf "dist/Etrade Portfolio" "dist/Etrade Portfolio.zip"
+    mkdir -p "dist/Etrade Portfolio"
+    cp start.command uninstall.command \
+       app.py prices.py tax_engine.py xlsx_parser.py \
+       pyproject.toml uv.lock ISTRUZIONI.txt \
+       "dist/Etrade Portfolio/"
+    cp -r templates static migrations "dist/Etrade Portfolio/"
+    cd "dist"
+    zip -r "Etrade Portfolio.zip" "Etrade Portfolio" -x "*/__pycache__/*" -x "*/.DS_Store"
+    rm -rf "Etrade Portfolio"
+    cd "$ROOT"
+    echo "✓ dist/Etrade Portfolio.zip pronto per la distribuzione"
