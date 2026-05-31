@@ -65,6 +65,45 @@ class Lot(models.Model):
         return f"{self.symbol} {self.plan_type} {self.date_acquired}"
 
 
+class Sale(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    sale_price_usd = models.DecimalField(max_digits=10, decimal_places=5)
+    eur_usd_rate = models.DecimalField(max_digits=10, decimal_places=6)
+    gross_proceeds_usd = models.DecimalField(max_digits=14, decimal_places=5)
+    net_gain_usd = models.DecimalField(max_digits=14, decimal_places=5)
+    tax_usd = models.DecimalField(max_digits=14, decimal_places=5)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    @property
+    def gross_proceeds_eur(self):
+        return self.gross_proceeds_usd / self.eur_usd_rate
+
+    @property
+    def tax_eur(self):
+        return self.tax_usd / self.eur_usd_rate
+
+    @property
+    def total_qty(self):
+        return sum(sl.qty_sold for sl in self.lots.all())
+
+
+class SaleLot(models.Model):
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="lots")
+    original_lot_id = models.IntegerField()
+    symbol = models.CharField(max_length=10)
+    plan_type = models.CharField(max_length=10)
+    date_acquired = models.DateField()
+    qty_sold = models.DecimalField(max_digits=10, decimal_places=4)
+    cost_basis = models.DecimalField(max_digits=10, decimal_places=5)
+    tax_status = models.CharField(max_length=20)
+    gain_usd = models.DecimalField(max_digits=14, decimal_places=5)
+
+    class Meta:
+        ordering = ["date_acquired"]
+
+
 # ── import logic ─────────────────────────────────────────────────────────────
 
 
@@ -91,6 +130,45 @@ def import_lots(lot_data: list[dict], mode: str = "overwrite") -> int:
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
+
+
+def _execute_sale(selected: list, sale_price: Decimal, eur_usd: Decimal) -> "dict | None":
+    from tax_engine import calculate_sale_result
+
+    if not selected:
+        return None
+
+    result = calculate_sale_result(selected, sale_price, eur_usd)
+    sale = Sale.objects.create(
+        sale_price_usd=sale_price,
+        eur_usd_rate=eur_usd,
+        gross_proceeds_usd=result["gross_proceeds_usd"],
+        net_gain_usd=result["net_gain_usd"],
+        tax_usd=result["tax_usd"],
+    )
+    updated_lots = []
+    deleted_lot_pks = []
+    for entry in result["per_lot"]:
+        lot = entry["lot"]
+        SaleLot.objects.create(
+            sale=sale,
+            original_lot_id=lot.pk,
+            symbol=lot.symbol,
+            plan_type=lot.plan_type,
+            date_acquired=lot.date_acquired,
+            qty_sold=entry["qty"],
+            cost_basis=lot.cost_basis,
+            tax_status=lot.tax_status,
+            gain_usd=entry["gain_usd"],
+        )
+        if entry["qty"] >= lot.sellable_qty:
+            deleted_lot_pks.append(lot.pk)
+            lot.delete()
+        else:
+            lot.sellable_qty -= entry["qty"]
+            lot.save()
+            updated_lots.append(lot)
+    return {"sale": sale, "updated_lots": updated_lots, "deleted_lot_pks": deleted_lot_pks}
 
 
 def _portfolio_context():
@@ -177,7 +255,10 @@ def _portfolio_context():
 def dashboard(request):
     from django.shortcuts import render
 
-    ctx = _portfolio_context() if Lot.objects.exists() else {"has_lots": False}
+    has_lots = Lot.objects.exists()
+    sales = list(Sale.objects.prefetch_related("lots").all()[:10])
+    ctx = _portfolio_context() if has_lots else {"has_lots": False}
+    ctx["sales"] = sales
     return render(request, "dashboard.html", ctx)
 
 
@@ -223,7 +304,11 @@ def import_view(request):
 
         return redirect("/")
 
-    return render(request, "import.html", {"count": Lot.objects.count()})
+    return render(
+        request,
+        "import.html",
+        {"count": Lot.objects.count(), "sales": list(Sale.objects.prefetch_related("lots").all())},
+    )
 
 
 @app.route("/simulate/")
@@ -336,7 +421,89 @@ def reset_view(request):
         return response
 
 
-if __name__ == "__main__":
+@app.route("/sell/")
+def sell_view(request):
+    from django.shortcuts import redirect, render
+
+    if request.method != "POST":
+        return redirect("/simulate/")
+
+    try:
+        sale_price = Decimal(request.POST.get("sale_price", "0"))
+        eur_usd = Decimal(request.POST.get("eur_usd", "0"))
+    except Exception:
+        return redirect("/simulate/")
+
+    if sale_price <= 0 or eur_usd <= 0:
+        return redirect("/simulate/")
+
+    lots = list(Lot.objects.all())
+    selected = []
+    for lot in lots:
+        raw = request.POST.get(f"qty_{lot.pk}", "0").strip()
+        try:
+            qty = Decimal(raw)
+        except Exception:
+            qty = Decimal("0")
+        if qty > 0:
+            selected.append((lot, qty))
+
+    _execute_sale(selected, sale_price, eur_usd)
+
+    response = render(request, "partials/sell_success.html", {})
+    response["HX-Trigger"] = "saleComplete"
+    return response
+
+
+@app.route("/sell/undo/")
+def sell_undo_view(request):
+    from django.http import HttpResponse
+    from django.shortcuts import redirect
+
+    if request.method != "POST":
+        return redirect("/import/")
+
+    last_sale = Sale.objects.first()
+    if last_sale:
+        for slot in last_sale.lots.all():
+            try:
+                lot = Lot.objects.get(pk=slot.original_lot_id)
+                lot.sellable_qty += slot.qty_sold
+                lot.save()
+            except Lot.DoesNotExist:
+                Lot.objects.create(
+                    symbol=slot.symbol,
+                    plan_type=slot.plan_type,
+                    date_acquired=slot.date_acquired,
+                    sellable_qty=slot.qty_sold,
+                    cost_basis=slot.cost_basis,
+                    tax_status=slot.tax_status,
+                )
+        last_sale.delete()
+
+    response = HttpResponse()
+    response["HX-Redirect"] = "/import/"
+    return response
+
+
+@app.route("/simulate/lots/")
+def simulate_lots(request):
+    from django.shortcuts import render
+
+    from prices import get_stock_price_usd
+
+    lots = list(Lot.objects.all())
+    plan_groups = [
+        ("ESPP", [lot for lot in lots if lot.plan_type == Lot.ESPP], "card-espp"),
+        ("RSU", [lot for lot in lots if lot.plan_type == Lot.RSU], "card-rsu"),
+    ]
+    price_usd = get_stock_price_usd()
+    return render(
+        request, "partials/lot_tables.html", {"plan_groups": plan_groups, "price_usd": price_usd}
+    )
+
+
+if __name__ == "__main__":  # pragma: no cover
     import sys
 
     if len(sys.argv) > 1 and sys.argv[1] != "run":

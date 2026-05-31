@@ -68,6 +68,29 @@
   </article>
 </section>
 
+{% if sales %}
+<section>
+  <article class="settings-card card-sales">
+    <h3>Storico vendite</h3>
+    {% for sale in sales %}
+    <div class="sale-history-item">
+      <div class="sale-history-header">
+        <span><strong>{{ sale.created_at|date:"d/m/Y H:i" }}</strong> — ${{ sale.sale_price_usd|floatformat:2 }}/azione</span>
+        <span class="sale-history-totals">Ricavo: ${{ sale.gross_proceeds_usd|floatformat:2 }} · Tasse: ${{ sale.tax_usd|floatformat:2 }}</span>
+      </div>
+    </div>
+    {% endfor %}
+    <div class="form-actions">
+      <button class="danger outline"
+              hx-post="/sell/undo/"
+              hx-confirm="Annullare l'ultima vendita? Le posizioni vendute verranno ripristinate nel portfolio.">
+        Annulla ultima vendita
+      </button>
+    </div>
+  </article>
+</section>
+{% endif %}
+
 <section>
   <article class="settings-card card-danger">
     <h3>Danger Zone</h3>

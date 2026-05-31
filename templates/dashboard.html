@@ -122,4 +122,48 @@
 
 {% endif %}{# prices_unavailable #}
 {% endif %}{# has_lots #}
+
+{% if sales %}
+<h2 class="sales-section-title">Vendite effettuate</h2>
+{% for sale in sales %}
+<article class="settings-card card-sales">
+  <header>
+    <strong>{{ sale.created_at|date:"d/m/Y \a\l\l\e H:i" }}</strong> — ${{ sale.sale_price_usd|floatformat:2 }}/azione
+  </header>
+  <table>
+    <tr>
+      <th>Ricavo lordo</th>
+      <td>${{ sale.gross_proceeds_usd|floatformat:2 }}</td>
+      <td>€{{ sale.gross_proceeds_eur|floatformat:2 }}</td>
+    </tr>
+    <tr>
+      <th>Tasse stimate (26%)</th>
+      <td><strong>${{ sale.tax_usd|floatformat:2 }}</strong></td>
+      <td><strong>€{{ sale.tax_eur|floatformat:2 }}</strong></td>
+    </tr>
+  </table>
+  <details>
+    <summary>{{ sale.lots.count }} posizioni vendute</summary>
+    <figure>
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Tipo</th><th>Qtà</th><th>Costo</th><th>Guadagno</th></tr>
+      </thead>
+      <tbody>
+      {% for sl in sale.lots.all %}
+      <tr class="sim-row-{% if sl.plan_type == 'ESPP' %}espp{% else %}rsu{% endif %}">
+        <td>{{ sl.date_acquired|date:"d/m/y" }}</td>
+        <td>{{ sl.plan_type }}</td>
+        <td>{{ sl.qty_sold|floatformat:"-4" }}</td>
+        <td>${{ sl.cost_basis|floatformat:4 }}</td>
+        <td>${{ sl.gain_usd|floatformat:2 }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </figure>
+  </details>
+</article>
+{% endfor %}
+{% endif %}
 {% endblock %}

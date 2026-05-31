@@ -1,0 +1,22 @@
+<tr id="lot-row-{{ lot.pk }}">
+  <td>{{ lot.date_acquired|date:"d/m/y" }}</td>
+  <td>${{ lot.cost_basis|floatformat:4 }}</td>
+  <td>{{ lot.sellable_qty|floatformat:"-4" }}</td>
+  <td>
+    {% if lot.tax_status == "Long Term" %}
+      <span class="badge-long">Long</span>
+    {% else %}
+      <span class="badge-short">Short</span>
+    {% endif %}
+  </td>
+  <td x-data="{ qty: 0, max: {{ lot.sellable_qty|floatformat:'4u' }}, set(v){ this.qty=v; this.$nextTick(()=>this.$refs.q.dispatchEvent(new Event('change',{bubbles:true}))) } }">
+    <div class="qty-controls">
+      <input x-ref="q" type="number" name="qty_{{ lot.pk }}"
+             x-model.number="qty" min="0" :max="max" step="0.001"
+             class="qty-input" />
+      <button type="button" class="qty-btn" @click="set(Math.max(qty-1,0))">-1</button>
+      <button type="button" class="qty-btn" @click="set(Math.min(qty+1,max))">+1</button>
+      <button type="button" class="qty-btn" @click="set(max)">Tutte</button>
+    </div>
+  </td>
+</tr>

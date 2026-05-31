@@ -66,7 +66,7 @@ ftest *args:
 # Run tests with coverage (must reach 100%)
 [group('utility')]
 cov *args:
-    ENVIRONMENT=test uv run pytest -n auto --dist loadscope --exitfirst --cov=. --cov-report html:htmlcov --cov-report term:skip-covered --cov-fail-under 100 {{ args }}
+    ENVIRONMENT=test uv run pytest --exitfirst --cov=. --cov-report html:htmlcov --cov-report term:skip-covered --cov-fail-under 100 {{ args }}
 
 # Run linter / pre-commit hooks
 [group('utility')]

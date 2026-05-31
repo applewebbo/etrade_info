@@ -531,3 +531,42 @@ tbody tr:nth-child(even) th {
   color: var(--pico-color-red-700);
   border: 1px solid var(--pico-color-red-200);
 }
+
+.sell-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.sell-success-card {
+  border-radius: .5rem;
+  box-shadow: none;
+}
+
+@keyframes lot-sold-flash {
+  0%   { background-color: var(--pico-color-jade-100); }
+  100% { background-color: transparent; }
+}
+
+.lot-row-flash {
+  animation: lot-sold-flash 2s ease-out;
+}
+
+
+.card-sales { border-top: 3px solid var(--pico-color-slate-400); }
+
+.sales-section-title { margin-top: 2rem; }
+
+.sale-history-item {
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--pico-color-slate-100);
+}
+.sale-history-item:last-of-type { border-bottom: none; }
+.sale-history-header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .25rem;
+  font-size: .9rem;
+}
+.sale-history-totals { color: var(--pico-muted-color); font-size: .85rem; }

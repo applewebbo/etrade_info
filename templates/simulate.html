@@ -8,97 +8,48 @@
 <article><p>Nessuna posizione. <a href="/import/">Importa prima il file XLSX</a>.</p></article>
 {% else %}
 
-<form id="sim-form"
-      hx-post="/simulate/"
-      hx-target="#sim-result"
-      hx-trigger="change delay:300ms"
-      hx-indicator="#sim-spinner"
-      hx-swap="innerHTML">
-  {% csrf_token %}
+<div class="sim-grid">
 
-  <div class="sim-grid">
-
-    <!-- Colonna sinistra: tabelle per tipo -->
-    <div class="sim-left">
-      {% for group_label, group_lots, card_class in plan_groups %}
-      {% if group_lots %}
-      <article class="settings-card {{ card_class }} sim-table-card">
-        <h3>{{ group_label }}</h3>
-        <figure>
-        <table>
-          <thead>
-            <tr>
-              <th>Data acquisto</th>
-              <th>Costo acquisto</th>
-              <th>Disponibili</th>
-              <th>Periodo</th>
-              <th>Qtà da vendere</th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for lot in group_lots %}
-          <tr>
-            <td>{{ lot.date_acquired|date:"d/m/y" }}</td>
-            <td>${{ lot.cost_basis|floatformat:4 }}</td>
-            <td>{{ lot.sellable_qty|floatformat:"-4" }}</td>
-            <td>
-              {% if lot.tax_status == "Long Term" %}
-                <span class="badge-long">Long</span>
-              {% else %}
-                <span class="badge-short">Short</span>
-              {% endif %}
-            </td>
-            <td x-data="{ qty: 0, max: {{ lot.sellable_qty|floatformat:'4u' }}, set(v){ this.qty=v; this.$nextTick(()=>this.$refs.q.dispatchEvent(new Event('change',{bubbles:true}))) } }">
-              <div class="qty-controls">
-                <input x-ref="q" type="number" name="qty_{{ lot.pk }}"
-                       x-model.number="qty" min="0" :max="max" step="0.001"
-                       class="qty-input" />
-                <button type="button" class="qty-btn" @click="set(Math.max(qty-1,0))">-1</button>
-                <button type="button" class="qty-btn" @click="set(Math.min(qty+1,max))">+1</button>
-                <button type="button" class="qty-btn" @click="set(max)">Tutte</button>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        </figure>
-      </article>
-      {% endif %}
-      {% endfor %}
-    </div>
-
-    <!-- Colonna destra: prezzo + risultato -->
-    <div class="sim-sidebar">
-      <article class="settings-card card-portfolio">
-        <h3>Simulazione</h3>
-
-        {% if prices_unavailable %}
-        <p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
-        {% elif prices_stale %}
-        <p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
-        {% endif %}
-
-        <label>
-          Prezzo vendita (USD)
-          <input type="number" name="sale_price" step="0.01" min="0"
-                 value="{{ price_usd|floatformat:'2u' }}"
-                 placeholder="{% if prices_unavailable %}Prezzo non disponibile{% else %}Prezzo vendita USD{% endif %}" />
-          {% if not prices_unavailable %}
-          <small class="sim-live-info">AAPL live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }}) · EUR/USD {{ eur_usd|floatformat:4 }}</small>
-          {% endif %}
-        </label>
-
-        <div class="sim-result-area">
-          <div id="sim-spinner" class="sim-spinner htmx-indicator"></div>
-          <div id="sim-result">
-            <p class="sim-result-placeholder">Inserisci le quantità da vendere per vedere il calcolo.</p>
-          </div>
-        </div>
-      </article>
-    </div>
-
+  <!-- Colonna sinistra: tabelle per tipo -->
+  <div class="sim-left"
+       hx-get="/simulate/lots/"
+       hx-trigger="saleComplete from:body"
+       hx-swap="innerHTML">
+    {% include "partials/lot_tables.html" %}
   </div>
-</form>
+
+  <!-- Colonna destra: prezzo + risultato -->
+  <div class="sim-sidebar">
+    <article class="settings-card card-portfolio">
+      <h3>Simulazione</h3>
+
+      {% if prices_unavailable %}
+      <p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
+      {% elif prices_stale %}
+      <p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
+      {% endif %}
+
+      <label>
+        Prezzo vendita (USD)
+        <input type="number" name="sale_price" step="any" min="0"
+               value="{{ price_usd|floatformat:'2u' }}"
+               placeholder="{% if prices_unavailable %}Prezzo non disponibile{% else %}Prezzo vendita USD{% endif %}"
+               oninput="document.getElementById('sale-price-hidden').value=this.value; document.getElementById('sim-form').dispatchEvent(new Event('change'))"
+               form="sim-form" />
+        {% if not prices_unavailable %}
+        <small class="sim-live-info">AAPL live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }}) · EUR/USD {{ eur_usd|floatformat:4 }}</small>
+        {% endif %}
+      </label>
+
+      <div class="sim-result-area">
+        <div id="sim-spinner" class="sim-spinner htmx-indicator"></div>
+        <div id="sim-result">
+          <p class="sim-result-placeholder">Inserisci le quantità da vendere per vedere il calcolo.</p>
+        </div>
+      </div>
+    </article>
+  </div>
+
+</div>
 {% endif %}
 {% endblock %}

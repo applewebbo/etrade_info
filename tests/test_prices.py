@@ -164,6 +164,14 @@ class TestPriceDirection:
         get_price("AAPL", fetcher=fixed_fetcher("308.82"))
         assert get_price_direction("AAPL") == "neutral"
 
+    def test_neutral_when_current_equals_prev(self):
+        import prices
+        from prices import get_price_direction
+
+        prices._last_known["AAPL"] = Decimal("200.00")
+        prices._prev_price["AAPL"] = Decimal("200.00")
+        assert get_price_direction("AAPL") == "neutral"
+
 
 class TestConvenienceFunctions:
     def setup_method(self):
@@ -184,3 +192,19 @@ class TestConvenienceFunctions:
         monkeypatch.setattr(prices, "_fetch_yfinance", fixed_fetcher("1.0850"))
         result = prices.get_eur_usd_rate()
         assert result == Decimal("1.0850")
+
+    def test_fetch_yfinance_calls_yfinance_api(self, monkeypatch):
+        import yfinance as yf
+
+        import prices
+
+        class FakeFastInfo(dict):
+            pass
+
+        class FakeTicker:
+            def __init__(self, ticker):
+                self.fast_info = FakeFastInfo({"last_price": 308.82})
+
+        monkeypatch.setattr(yf, "Ticker", FakeTicker)
+        result = prices._fetch_yfinance("AAPL")
+        assert result == Decimal("308.82")

@@ -96,3 +96,16 @@ class TestParseXlsx:
         }
         for lot in result:
             assert required <= lot.keys()
+
+    def test_parse_date_from_string_without_date_attr(self):
+        from xlsx_parser import _parse_date
+
+        assert _parse_date("2015-01-31") == date(2015, 1, 31)
+
+    def test_parse_date_from_datetime_object(self):
+        import datetime
+
+        from xlsx_parser import _parse_date
+
+        dt = datetime.datetime(2015, 1, 31, 0, 0)
+        assert _parse_date(dt) == date(2015, 1, 31)

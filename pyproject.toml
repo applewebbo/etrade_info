@@ -22,6 +22,9 @@ version = "0.1.0"
 [tool.bandit]
 exclude_dirs = ["tests"]
 
+[tool.coverage.run]
+omit = ["migrations/*"]
+
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::UserWarning:django.core.handlers.base"]
 pythonpath = ["."]

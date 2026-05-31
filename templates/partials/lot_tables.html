@@ -1,0 +1,37 @@
+{% load l10n %}
+<form id="sim-form"
+      hx-post="/simulate/"
+      hx-target="#sim-result"
+      hx-trigger="change delay:300ms"
+      hx-indicator="#sim-spinner"
+      hx-swap="innerHTML">
+  {% csrf_token %}
+
+  {% for group_label, group_lots, card_class in plan_groups %}
+  {% if group_lots %}
+  <article class="settings-card {{ card_class }} sim-table-card">
+    <h3>{{ group_label }}</h3>
+    <figure>
+    <table>
+      <thead>
+        <tr>
+          <th>Data acquisto</th>
+          <th>Costo acquisto</th>
+          <th>Disponibili</th>
+          <th>Periodo</th>
+          <th>Qtà da vendere</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for lot in group_lots %}
+        {% include "partials/lot_row.html" with lot=lot %}
+      {% endfor %}
+      </tbody>
+    </table>
+    </figure>
+  </article>
+  {% endif %}
+  {% endfor %}
+
+  <input type="hidden" name="sale_price" id="sale-price-hidden" value="{{ price_usd|floatformat:'2u'|unlocalize }}">
+</form>
