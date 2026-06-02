@@ -486,6 +486,77 @@ def sell_undo_view(request):
     return response
 
 
+@app.route("/ivafe/")
+def ivafe_view(request):
+    import datetime
+
+    import yfinance as yf
+    from django.shortcuts import render
+
+    from bdi_rates import get_bdi_eur_usd_rate
+    from ivafe_engine import calculate_ivafe
+
+    year = datetime.date.today().year - 1
+    lots = list(Lot.objects.all())
+
+    def _aapl_price(start: datetime.date, end: datetime.date, idx: int) -> Decimal | None:
+        try:
+            df = yf.download(
+                "AAPL",
+                start=start.isoformat(),
+                end=end.isoformat(),
+                auto_adjust=True,
+                progress=False,
+            )
+            if df.empty:
+                return None
+            return Decimal(str(round(float(df["Close"].iloc[idx].item()), 4)))
+        except Exception:
+            return None
+
+    price_start = _aapl_price(datetime.date(year, 1, 1), datetime.date(year, 1, 10), 0)
+    price_end = _aapl_price(datetime.date(year, 12, 24), datetime.date(year, 12, 31), -1)
+    rate_start = get_bdi_eur_usd_rate(datetime.date(year, 1, 10))
+    rate_end = get_bdi_eur_usd_rate(datetime.date(year, 12, 31))
+
+    data_available = all([price_start, price_end, rate_start, rate_end])
+
+    ctx = {"year": year, "has_lots": bool(lots), "data_available": data_available}
+    if data_available and lots:
+        ivafe_data = calculate_ivafe(lots, price_start, price_end, rate_start, rate_end, year)
+        rows = ivafe_data["rows"]
+        full_rows = [r for r in rows if r["days_held"] == 365]
+        partial_rows = [r for r in rows if r["days_held"] < 365]
+        for r in partial_rows:
+            rate_acq = get_bdi_eur_usd_rate(r["lot"].date_acquired)
+            r["value_start_eur"] = (
+                r["lot"].cost_basis * r["lot"].sellable_qty * rate_acq if rate_acq else None
+            )
+        rw_full_year = (
+            {
+                "total_qty": sum(r["lot"].sellable_qty for r in full_rows),
+                "value_start_eur": sum(r["value_start_eur"] for r in full_rows),
+                "value_end_eur": sum(r["value_end_eur"] for r in full_rows),
+                "days_held": 365,
+                "ivafe_eur": sum(r["ivafe_eur"] for r in full_rows),
+            }
+            if full_rows
+            else None
+        )
+        ctx.update(
+            {
+                "price_start": price_start,
+                "price_end": price_end,
+                "rate_start": rate_start,
+                "rate_end": rate_end,
+                "rw_full_year": rw_full_year,
+                "rw_partial_rows": partial_rows,
+                **ivafe_data,
+            }
+        )
+    return render(request, "ivafe.html", ctx)
+
+
 @app.route("/simulate/lots/")
 def simulate_lots(request):
     from django.shortcuts import render

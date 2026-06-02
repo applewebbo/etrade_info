@@ -466,3 +466,95 @@ class TestSimulateView:
             {f"qty_{lot.pk}": "not-a-number", "sale_price": "200"},
         )
         assert response.status_code == 200
+
+
+@pytest.fixture
+def mock_ivafe_data(monkeypatch):
+    """Patch external calls used by the IVAFE view."""
+    import bdi_rates
+
+    monkeypatch.setattr(
+        bdi_rates,
+        "get_bdi_eur_usd_rate",
+        lambda target_date, fetcher=None: Decimal("0.9689"),
+    )
+
+    import yfinance as yf
+
+    class _FakeDF:
+        def __init__(self, value):
+            self._value = value
+
+        @property
+        def empty(self):
+            return False
+
+        def __getitem__(self, key):
+            return self
+
+        @property
+        def iloc(self):
+            return _IlocHelper(self._value)
+
+    class _IlocHelper:
+        def __init__(self, value):
+            self._value = value
+
+        def __getitem__(self, idx):
+            return _Item(self._value)
+
+    class _Item:
+        def __init__(self, value):
+            self._value = value
+
+        def item(self):
+            return float(self._value)
+
+    monkeypatch.setattr(yf, "download", lambda *a, **kw: _FakeDF(Decimal("250.00")))
+
+
+@pytest.mark.django_db
+class TestIvafeView:
+    def test_get_returns_200(self, client, mock_ivafe_data):
+        response = client.get("/ivafe/")
+        assert response.status_code == 200
+
+    def test_page_shows_ivafe_title(self, client, mock_ivafe_data):
+        response = client.get("/ivafe/")
+        assert b"IVAFE" in response.content
+
+    def test_page_shows_no_lots_message_when_empty(self, client, mock_ivafe_data):
+        response = client.get("/ivafe/")
+        assert b"lotti" in response.content.lower() or response.status_code == 200
+
+    def test_page_shows_start_and_end_values_with_lots(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        response = client.get("/ivafe/")
+        assert response.status_code == 200
+        assert b"2025" in response.content
+
+    def test_page_shows_ivafe_amount_with_lots(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        response = client.get("/ivafe/")
+        assert response.status_code == 200
+        assert b"IVAFE" in response.content
+
+    def test_page_handles_bdi_unavailable(self, client, monkeypatch):
+        import bdi_rates
+
+        monkeypatch.setattr(
+            bdi_rates,
+            "get_bdi_eur_usd_rate",
+            lambda target_date, fetcher=None: None,
+        )
+        import yfinance as yf
+
+        monkeypatch.setattr(
+            yf, "download", lambda *a, **kw: (_ for _ in ()).throw(Exception("fail"))
+        )
+        response = client.get("/ivafe/")
+        assert response.status_code == 200

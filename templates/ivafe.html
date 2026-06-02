@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}IVAFE {{ year }} — Etrade Portfolio{% endblock %}
+{% block content %}
+
+<h2>IVAFE {{ year }}</h2>
+<p class="ivafe-subtitle">Imposta sul Valore delle Attività Finanziarie detenute all'Estero — aliquota 2‰ proporzionale ai giorni di detenzione.</p>
+
+{% if not has_lots %}
+<article>
+  <p>Nessun lotto presente nel database. Importa il file XLSX dalla pagina <a href="/import/">Impostazioni</a>.</p>
+</article>
+
+{% elif not data_available %}
+<article>
+  <p>Impossibile recuperare i dati storici necessari al calcolo (prezzi AAPL o tassi di cambio Banca d'Italia non disponibili). Riprova più tardi.</p>
+</article>
+
+{% else %}
+
+<!-- Tre card principali -->
+<div class="summary-grid ivafe-grid">
+  <div class="summary-card card-portfolio">
+    <small>Valore al 2 gennaio {{ year }} <span class="ivafe-rate-note">(€/$ {{ rate_start|floatformat:4 }})</span></small>
+    <strong>€{{ total_value_start_eur|floatformat:2 }}</strong>
+    <small>AAPL ${{ price_start|floatformat:2 }}</small>
+  </div>
+  <div class="summary-card card-rsu">
+    <small>Valore al 31 dicembre {{ year }} <span class="ivafe-rate-note">(€/$ {{ rate_end|floatformat:4 }})</span></small>
+    <strong>€{{ total_value_end_eur|floatformat:2 }}</strong>
+    <small>AAPL ${{ price_end|floatformat:2 }}</small>
+  </div>
+  <div class="summary-card card-taxes">
+    <small>IVAFE stimata {{ year }}</small>
+    <strong>€{{ total_ivafe_eur|floatformat:2 }}</strong>
+    <small>2‰ × valore 31/12 × giorni/365</small>
+  </div>
+</div>
+
+<!-- Dettaglio per lotto -->
+<div class="table-card">
+<figure>
+<table>
+  <thead>
+    <tr>
+      <th>Tipo</th>
+      <th>Data acquisto</th>
+      <th>Azioni</th>
+      <th>Valore 2/1 (€)</th>
+      <th>Valore 31/12 (€)</th>
+      <th>Giorni</th>
+      <th>IVAFE (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in rows %}
+  <tr>
+    <td>{{ row.lot.plan_type }}</td>
+    <td>{{ row.lot.date_acquired|date:"d/m/Y" }}</td>
+    <td>{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
+    <td>{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="ivafe-na">—</span>{% endif %}</td>
+    <td>€{{ row.value_end_eur|floatformat:2 }}</td>
+    <td>{{ row.days_held }}</td>
+    <td>€{{ row.ivafe_eur|floatformat:2 }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</figure>
+</div>
+
+<!-- Guida Quadro RW Modello 730 -->
+<h3 class="ivafe-section-title">Esempio compilazione Quadro RW — Modello 730/{{ year|add:1 }}</h3>
+<p class="ivafe-rw-intro">
+  Ogni tipologia di detenzione va riportata su una riga del Quadro RW.
+  Le azioni detenute per tutto l'anno vengono raggruppate in un'unica riga;
+  ogni lotto acquistato durante l'anno va su una riga separata.
+</p>
+
+<div class="table-card">
+<figure>
+<table class="ivafe-rw-table">
+  <thead>
+    <tr>
+      <th>Detenzione</th>
+      <th>Valore iniziale (€)</th>
+      <th>Valore finale (€)</th>
+      <th>Giorni</th>
+      <th>IVAFE (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% if rw_full_year %}
+  <tr class="ivafe-rw-example">
+    <td>{{ rw_full_year.total_qty|floatformat:"-4" }} azioni (365 gg)</td>
+    <td>€{{ rw_full_year.value_start_eur|floatformat:2 }}</td>
+    <td>€{{ rw_full_year.value_end_eur|floatformat:2 }}</td>
+    <td>365</td>
+    <td>€{{ rw_full_year.ivafe_eur|floatformat:2 }}</td>
+  </tr>
+  {% endif %}
+  {% for row in rw_partial_rows %}
+  <tr class="ivafe-rw-example">
+    <td>{{ row.lot.sellable_qty|floatformat:"-4" }} azioni ({{ row.days_held }} gg)</td>
+    <td>{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="ivafe-na">N/D</span>{% endif %}</td>
+    <td>€{{ row.value_end_eur|floatformat:2 }}</td>
+    <td>{{ row.days_held }}</td>
+    <td>€{{ row.ivafe_eur|floatformat:2 }}</td>
+  </tr>
+  {% endfor %}
+  {% if not rw_full_year and not rw_partial_rows %}
+  <tr><td colspan="5" class="ivafe-na">Nessun lotto da riportare per l'anno {{ year }}.</td></tr>
+  {% endif %}
+  </tbody>
+</table>
+</figure>
+</div>
+
+<div class="ivafe-note">
+  <p><strong>Note Quadro RW:</strong></p>
+  <ul>
+    <li><strong>Col. 2 – Codice titolo:</strong> 20 = conto deposito di titoli all'estero (il conto E*TRADE)</li>
+    <li><strong>Col. 4 – Paese:</strong> 069 = Stati Uniti d'America</li>
+    <li><strong>Col. 5 – Criterio valorizzazione:</strong> 1 = valore di mercato (per titoli quotati su mercati regolamentati)</li>
+    <li><strong>Col. 6 – Valore iniziale:</strong> valore al 1° gennaio {{ year }} (o alla data di acquisto se acquisito durante l'anno), in euro al cambio Banca d'Italia del giorno</li>
+    <li><strong>Col. 7 – Valore finale:</strong> valore al 31 dicembre {{ year }}, in euro al cambio Banca d'Italia (€/$ {{ rate_end|floatformat:4 }})</li>
+    <li><strong>Col. 8 – Giorni:</strong> numero di giorni di detenzione nell'anno</li>
+    <li><strong>Col. 20 – IVAFE:</strong> valore finale × 0,2% × giorni / 365</li>
+    <li>Per i lotti acquistati durante l'anno il valore iniziale è calcolato come costo acquisto × quantità × cambio BdI alla data di acquisto (fonte: <a href="https://tassidicambio.bancaditalia.it" target="_blank" rel="noopener">tassidicambio.bancaditalia.it</a>)</li>
+  </ul>
+  <p class="ivafe-disclaimer">⚠ La stima è basata sui lotti attualmente presenti nel database. Lotti venduti durante il {{ year }} e rimossi non sono inclusi nel calcolo.</p>
+</div>
+
+<div class="ivafe-legal">
+  <p><strong>AVVERTENZA LEGALE — LIMITAZIONE DI RESPONSABILITÀ</strong></p>
+  <p>
+    Le informazioni, i dati e le elaborazioni forniti dalla presente applicazione sono messi a disposizione
+    dell'utente a titolo meramente esemplificativo e informativo, senza alcuna garanzia — espressa o implicita —
+    di completezza, accuratezza, aggiornamento o idoneità a qualsiasi scopo specifico, ivi inclusa la
+    corretta compilazione di dichiarazioni fiscali.
+  </p>
+  <p>
+    L'utente è l'unico soggetto responsabile, ai sensi dell'art. 1 del D.P.R. 22 luglio 1998, n. 322
+    e della normativa vigente in materia, della veridicità, correttezza e completezza delle proprie
+    dichiarazioni tributarie presentate all'Agenzia delle Entrate. Nessuna elaborazione prodotta da
+    questa applicazione può sostituire il parere di un professionista abilitato (commercialista,
+    consulente fiscale o CAF) né esonerare l'utente dall'obbligo di verifica dei dati dichiarati.
+  </p>
+  <p>
+    L'autore dell'applicazione declina qualsiasi responsabilità per danni diretti, indiretti,
+    incidentali o consequenziali derivanti dall'uso o dall'affidamento sulle informazioni qui contenute,
+    incluse — a titolo esemplificativo e non esaustivo — sanzioni, interessi o altre conseguenze
+    amministrative irrogate dall'Agenzia delle Entrate o da qualsiasi altra autorità competente.
+  </p>
+</div>
+
+{% endif %}
+{% endblock %}

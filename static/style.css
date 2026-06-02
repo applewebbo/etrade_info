@@ -570,3 +570,61 @@ tbody tr:nth-child(even) th {
   font-size: .9rem;
 }
 .sale-history-totals { color: var(--pico-muted-color); font-size: .85rem; }
+
+/* IVAFE page */
+.ivafe-subtitle {
+  color: var(--pico-muted-color);
+  margin-top: -.5rem;
+  margin-bottom: 1.5rem;
+  font-size: .9rem;
+}
+.ivafe-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 700px) { .ivafe-grid { grid-template-columns: 1fr; } }
+
+.ivafe-rate-note {
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.ivafe-na { color: var(--pico-muted-color); font-style: italic; }
+.ivafe-section-title { margin-top: 2.5rem; margin-bottom: .25rem; }
+.ivafe-rw-intro { color: var(--pico-muted-color); font-size: .875rem; margin-bottom: .75rem; }
+.ivafe-rw-table { font-size: .8rem; }
+.ivafe-rw-example td { vertical-align: top; }
+.ivafe-note {
+  background: var(--pico-color-slate-50);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: .5rem;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  font-size: .82rem;
+}
+.ivafe-note ul { margin: .4rem 0 .4rem 1.25rem; }
+.ivafe-note li { margin-bottom: .2rem; }
+.ivafe-disclaimer {
+  margin-top: .75rem;
+  color: var(--pico-color-orange-700);
+  background: var(--pico-color-orange-50);
+  border: 1px solid var(--pico-color-orange-200);
+  border-radius: .25rem;
+  padding: .4rem .75rem;
+  font-size: .8rem;
+}
+.ivafe-legal {
+  margin-top: 2rem;
+  border-top: 1px solid var(--pico-muted-border-color);
+  padding-top: 1.25rem;
+  color: var(--pico-muted-color);
+  font-size: .75rem;
+  line-height: 1.6;
+}
+.ivafe-legal strong {
+  display: block;
+  margin-bottom: .5rem;
+  font-size: .7rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--pico-color-slate-500);
+}
+.ivafe-legal p { margin-bottom: .75rem; }
+.ivafe-legal p:last-child { margin-bottom: 0; }
