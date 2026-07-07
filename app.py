@@ -1,4 +1,6 @@
+import json
 import os
+from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -164,6 +166,112 @@ def _update_grant_dates(lot_data: list[dict]) -> int:
             grant_date=lot.grant_date
         )
     return updated
+
+
+# ── backup / restore ─────────────────────────────────────────────────────────
+
+BACKUP_VERSION = 1
+
+
+class BackupError(ValueError):
+    """Raised when a backup file cannot be restored."""
+
+
+def _lot_to_dict(lot: "Lot") -> dict:
+    return {
+        "symbol": lot.symbol,
+        "plan_type": lot.plan_type,
+        "date_acquired": lot.date_acquired.isoformat(),
+        "grant_date": lot.grant_date.isoformat() if lot.grant_date else None,
+        "sellable_qty": str(lot.sellable_qty),
+        "cost_basis": str(lot.cost_basis),
+        "tax_status": lot.tax_status,
+    }
+
+
+def _sale_to_dict(sale: "Sale") -> dict:
+    return {
+        "created_at": sale.created_at.isoformat(),
+        "sale_price_usd": str(sale.sale_price_usd),
+        "eur_usd_rate": str(sale.eur_usd_rate),
+        "gross_proceeds_usd": str(sale.gross_proceeds_usd),
+        "net_gain_usd": str(sale.net_gain_usd),
+        "tax_usd": str(sale.tax_usd),
+        "lots": [
+            {
+                "original_lot_id": sl.original_lot_id,
+                "symbol": sl.symbol,
+                "plan_type": sl.plan_type,
+                "date_acquired": sl.date_acquired.isoformat(),
+                "grant_date": sl.grant_date.isoformat() if sl.grant_date else None,
+                "qty_sold": str(sl.qty_sold),
+                "cost_basis": str(sl.cost_basis),
+                "tax_status": sl.tax_status,
+                "gain_usd": str(sl.gain_usd),
+            }
+            for sl in sale.lots.all()
+        ],
+    }
+
+
+def export_backup() -> dict:
+    """Serialise the whole portfolio and sales history into a plain dict."""
+    return {
+        "version": BACKUP_VERSION,
+        "exported_at": timezone.now().isoformat(),
+        "lots": [_lot_to_dict(lot) for lot in Lot.objects.all()],
+        "sales": [_sale_to_dict(sale) for sale in Sale.objects.all()],
+    }
+
+
+def _opt_date(value: str | None) -> "date | None":
+    return date.fromisoformat(value) if value else None
+
+
+def restore_backup(data: dict) -> None:
+    """Replace all portfolio and sales data with the contents of a backup dict."""
+    if not isinstance(data, dict) or data.get("version") != BACKUP_VERSION:
+        raise BackupError("File di backup non valido o versione non supportata.")
+
+    Lot.objects.all().delete()
+    Sale.objects.all().delete()
+
+    for lot in data.get("lots", []):
+        Lot.objects.create(
+            symbol=lot["symbol"],
+            plan_type=lot["plan_type"],
+            date_acquired=date.fromisoformat(lot["date_acquired"]),
+            grant_date=_opt_date(lot.get("grant_date")),
+            sellable_qty=Decimal(lot["sellable_qty"]),
+            cost_basis=Decimal(lot["cost_basis"]),
+            tax_status=lot["tax_status"],
+        )
+
+    for sale_data in data.get("sales", []):
+        sale = Sale.objects.create(
+            sale_price_usd=Decimal(sale_data["sale_price_usd"]),
+            eur_usd_rate=Decimal(sale_data["eur_usd_rate"]),
+            gross_proceeds_usd=Decimal(sale_data["gross_proceeds_usd"]),
+            net_gain_usd=Decimal(sale_data["net_gain_usd"]),
+            tax_usd=Decimal(sale_data["tax_usd"]),
+        )
+        # created_at uses auto_now_add, so it must be restored via update().
+        Sale.objects.filter(pk=sale.pk).update(
+            created_at=datetime.fromisoformat(sale_data["created_at"])
+        )
+        for sl in sale_data.get("lots", []):
+            SaleLot.objects.create(
+                sale=sale,
+                original_lot_id=sl["original_lot_id"],
+                symbol=sl["symbol"],
+                plan_type=sl["plan_type"],
+                date_acquired=date.fromisoformat(sl["date_acquired"]),
+                grant_date=_opt_date(sl.get("grant_date")),
+                qty_sold=Decimal(sl["qty_sold"]),
+                cost_basis=Decimal(sl["cost_basis"]),
+                tax_status=sl["tax_status"],
+                gain_usd=Decimal(sl["gain_usd"]),
+            )
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -405,49 +513,28 @@ def simulate(request):
 
 @app.route("/export/")
 def export_view(request):
-    import io
-
-    import pandas as pd
     from django.http import HttpResponse
 
-    lots = list(Lot.objects.all())
-    rows = [
-        {
-            "Record Type": "Detail",
-            "Symbol": lot.symbol,
-            "Plan Type": "Rest. Stock" if lot.plan_type == Lot.RSU else lot.plan_type,
-            "Date Acquired": lot.date_acquired.strftime("%m/%d/%Y"),
-            "Grant Date": lot.grant_date.strftime("%m/%d/%Y") if lot.grant_date else "",
-            "Sellable Qty.": float(lot.sellable_qty),
-            "Est. Cost Basis (per share):": float(lot.cost_basis),
-            "Tax Status.1": lot.tax_status,
-        }
-        for lot in lots
-    ]
-    df = pd.DataFrame(
-        rows,
-        columns=[
-            "Record Type",
-            "Symbol",
-            "Plan Type",
-            "Date Acquired",
-            "Grant Date",
-            "Sellable Qty.",
-            "Est. Cost Basis (per share):",
-            "Tax Status.1",
-        ],
-    )
-
-    buf = io.BytesIO()
-    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Sellable", index=False)
-    buf.seek(0)
-
-    response = HttpResponse(
-        buf.read(), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-    response["Content-Disposition"] = 'attachment; filename="portfolio_export.xlsx"'
+    payload = json.dumps(export_backup(), indent=2, ensure_ascii=False)
+    filename = f"etrade_backup_{timezone.localdate().isoformat()}.json"
+    response = HttpResponse(payload, content_type="application/json")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+@app.route("/restore/")
+def restore_view(request):
+    from django.shortcuts import redirect, render
+
+    if request.method == "POST" and request.FILES.get("backup"):
+        try:
+            data = json.load(request.FILES["backup"])
+            restore_backup(data)
+        except (json.JSONDecodeError, BackupError, KeyError, TypeError):
+            return render(request, "restore_error.html", status=400)
+        return redirect("/")
+
+    return redirect("/import/")
 
 
 @app.route("/reset/")

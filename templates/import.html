@@ -64,13 +64,46 @@
 
 <section>
   <article class="settings-card card-export">
-    <h3>Esporta portfolio</h3>
+    <h3>Backup completo</h3>
     <div class="export-row">
       <div class="export-info">
-        <strong>Scarica le posizioni in formato XLSX</strong>
-        <p>Genera un file compatibile con il formato di importazione E*TRADE con tutte le posizioni attualmente caricate nel database.</p>
+        <strong>Scarica un backup completo (JSON)</strong>
+        <p>Genera un unico file di backup con l'intero portfolio e lo storico delle vendite. Usalo per conservare o trasferire i tuoi dati.</p>
       </div>
-      <a href="/export/" role="button" {% if not count %}aria-disabled="true"{% endif %}>Esporta</a>
+      <a href="/export/" role="button">Esporta backup</a>
+    </div>
+    <hr />
+    <div class="export-row" x-data="{ open: false }">
+      <div class="export-info">
+        <strong>Ripristina da un backup</strong>
+        <p>Carica un file di backup JSON. Portfolio e vendite attuali verranno <strong>sostituiti</strong> con il contenuto del file.</p>
+      </div>
+      <button type="button" class="secondary" @click="open = true">Ripristina backup</button>
+
+      <!-- Modale ripristino -->
+      <div class="modal-backdrop" x-show="open" x-transition.opacity @click.self="open = false" x-cloak>
+        <div class="modal-box" @click.stop>
+          <header class="modal-header">
+            <strong>Ripristina backup</strong>
+            <button class="modal-close secondary outline" @click="open = false" aria-label="Chiudi">✕</button>
+          </header>
+          <p>Carica un file di backup JSON. Portfolio e vendite attuali verranno <strong>sostituiti</strong> con il contenuto del file. L'operazione non può essere annullata.</p>
+          <form method="post" action="/restore/" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label class="file-drop" x-data="{ name: '' }">
+              <input type="file" name="backup" accept=".json" required
+                     x-on:change="name = $event.target.files[0]?.name ?? ''"
+                     class="file-drop-input" />
+              <span class="file-drop-icon">♻️</span>
+              <span class="file-drop-hint" x-text="name || 'backup.json'"></span>
+              <span class="file-drop-sub">Clicca per selezionare il file</span>
+            </label>
+            <div class="form-actions">
+              <button type="submit">Ripristina</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </article>
 </section>

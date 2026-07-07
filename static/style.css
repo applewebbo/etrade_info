@@ -265,6 +265,9 @@ label:has(.sim-live-info) { margin-bottom: .35rem !important; }
 }
 
 /* Modal */
+[x-cloak] {
+  display: none !important;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;

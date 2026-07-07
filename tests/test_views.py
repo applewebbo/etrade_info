@@ -51,62 +51,95 @@ class TestResetView:
 
 @pytest.mark.django_db
 class TestExportView:
-    def test_returns_xlsx_file(self, client):
+    def test_returns_json_backup_file(self, client):
         from app import Lot
 
         Lot.objects.create(**LOT_DEFAULTS)
         response = client.get("/export/")
         assert response.status_code == 200
-        assert (
-            response["Content-Type"]
-            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        assert "portfolio_export.xlsx" in response["Content-Disposition"]
+        assert response["Content-Type"] == "application/json"
+        assert ".json" in response["Content-Disposition"]
 
-    def test_xlsx_has_sellable_sheet_with_correct_columns(self, client):
+    def test_backup_contains_lots_and_sales(self, client):
+        import json
+
         from app import Lot
 
         Lot.objects.create(**LOT_DEFAULTS)
         response = client.get("/export/")
-        df = pd.read_excel(io.BytesIO(response.content), sheet_name="Sellable")
-        assert list(df.columns) == [
-            "Record Type",
-            "Symbol",
-            "Plan Type",
-            "Date Acquired",
-            "Grant Date",
-            "Sellable Qty.",
-            "Est. Cost Basis (per share):",
-            "Tax Status.1",
-        ]
+        data = json.loads(response.content)
+        assert data["version"] == 1
+        assert "exported_at" in data
+        assert len(data["lots"]) == 1
+        assert data["lots"][0]["symbol"] == "AAPL"
+        assert data["lots"][0]["cost_basis"] == "100.00000"
+        assert data["sales"] == []
 
-    def test_xlsx_data_matches_lot(self, client):
-        from app import Lot
+    def test_empty_db_returns_valid_backup(self, client):
+        import json
+
+        response = client.get("/export/")
+        data = json.loads(response.content)
+        assert data["lots"] == []
+        assert data["sales"] == []
+
+
+@pytest.mark.django_db
+class TestRestoreView:
+    def _backup_file(self, data):
+        import json
+
+        return io.BytesIO(json.dumps(data).encode())
+
+    def test_restore_rebuilds_portfolio(self, client):
+        from app import Lot, export_backup
 
         Lot.objects.create(**LOT_DEFAULTS)
-        response = client.get("/export/")
-        df = pd.read_excel(io.BytesIO(response.content), sheet_name="Sellable")
-        assert len(df) == 1
-        row = df.iloc[0]
-        assert row["Record Type"] == "Detail"
-        assert row["Symbol"] == "AAPL"
-        assert row["Plan Type"] == "ESPP"
-        assert row["Sellable Qty."] == 10.0
-        assert row["Tax Status.1"] == "Long Term"
+        backup = export_backup()
+        Lot.objects.all().delete()
 
-    def test_rsu_plan_type_mapped_correctly(self, client):
-        from app import Lot
+        f = self._backup_file(backup)
+        f.name = "backup.json"
+        response = client.post("/restore/", {"backup": f})
+        assert response.status_code == 302
+        assert Lot.objects.count() == 1
+        assert Lot.objects.first().cost_basis == Decimal("100.00000")
 
-        Lot.objects.create(**{**LOT_DEFAULTS, "plan_type": "RSU"})
-        response = client.get("/export/")
-        df = pd.read_excel(io.BytesIO(response.content), sheet_name="Sellable")
-        assert df.iloc[0]["Plan Type"] == "Rest. Stock"
+    def test_restore_overwrites_existing_data(self, client):
+        from app import Lot, export_backup
 
-    def test_empty_db_returns_empty_xlsx(self, client):
-        response = client.get("/export/")
-        assert response.status_code == 200
-        df = pd.read_excel(io.BytesIO(response.content), sheet_name="Sellable")
-        assert len(df) == 0
+        Lot.objects.create(**LOT_DEFAULTS)
+        backup = export_backup()
+        Lot.objects.all().delete()
+        Lot.objects.create(**{**LOT_DEFAULTS, "symbol": "MSFT"})
+
+        f = self._backup_file(backup)
+        f.name = "backup.json"
+        client.post("/restore/", {"backup": f})
+        assert Lot.objects.count() == 1
+        assert Lot.objects.first().symbol == "AAPL"
+
+    def test_restore_invalid_json_returns_400(self, client):
+        f = io.BytesIO(b"not json")
+        f.name = "backup.json"
+        response = client.post("/restore/", {"backup": f})
+        assert response.status_code == 400
+
+    def test_restore_wrong_version_returns_400(self, client):
+        f = self._backup_file({"version": 999, "lots": [], "sales": []})
+        f.name = "backup.json"
+        response = client.post("/restore/", {"backup": f})
+        assert response.status_code == 400
+
+    def test_get_redirects_to_import(self, client):
+        response = client.get("/restore/")
+        assert response.status_code == 302
+        assert response["Location"] == "/import/"
+
+    def test_post_without_file_redirects_to_import(self, client):
+        response = client.post("/restore/")
+        assert response.status_code == 302
+        assert response["Location"] == "/import/"
 
 
 SALE_DEFAULTS = dict(
@@ -419,8 +452,6 @@ class TestImportViewPost:
             "Tax Status.1": ["Long Term"],
         }
         import io
-
-        import pandas as pd
 
         buf = io.BytesIO()
         with pd.ExcelWriter(buf, engine="openpyxl") as writer:
