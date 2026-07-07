@@ -52,6 +52,7 @@ class Lot(models.Model):
     symbol = models.CharField(max_length=10)
     plan_type = models.CharField(max_length=10, choices=[(ESPP, "ESPP"), (RSU, "RSU")])
     date_acquired = models.DateField()
+    grant_date = models.DateField(null=True, blank=True)
     sellable_qty = models.DecimalField(max_digits=10, decimal_places=4)
     cost_basis = models.DecimalField(max_digits=10, decimal_places=5)
     tax_status = models.CharField(
@@ -95,6 +96,7 @@ class SaleLot(models.Model):
     symbol = models.CharField(max_length=10)
     plan_type = models.CharField(max_length=10)
     date_acquired = models.DateField()
+    grant_date = models.DateField(null=True, blank=True)
     qty_sold = models.DecimalField(max_digits=10, decimal_places=4)
     cost_basis = models.DecimalField(max_digits=10, decimal_places=5)
     tax_status = models.CharField(max_length=20)
@@ -108,12 +110,15 @@ class SaleLot(models.Model):
 
 
 def import_lots(lot_data: list[dict], mode: str = "overwrite") -> int:
-    """Import lots from parsed data. Returns number of lots created."""
+    """Import lots from parsed data. Returns number of lots created (or updated)."""
     if mode == "overwrite":
         Lot.objects.all().delete()
         for data in lot_data:
             Lot.objects.create(**data)
         return len(lot_data)
+
+    if mode == "update_grant":
+        return _update_grant_dates(lot_data)
 
     created = 0
     for data in lot_data:
@@ -122,11 +127,43 @@ def import_lots(lot_data: list[dict], mode: str = "overwrite") -> int:
             plan_type=data["plan_type"],
             date_acquired=data["date_acquired"],
             cost_basis=data["cost_basis"],
-            defaults={"sellable_qty": data["sellable_qty"], "tax_status": data["tax_status"]},
+            defaults={
+                "sellable_qty": data["sellable_qty"],
+                "tax_status": data["tax_status"],
+                "grant_date": data.get("grant_date"),
+            },
         )
         if was_created:
             created += 1
     return created
+
+
+def _update_grant_dates(lot_data: list[dict]) -> int:
+    """Non-destructively fill grant_date on existing lots and sold lots.
+
+    Matches rows by symbol+plan_type+date_acquired+cost_basis and sets grant_date
+    only where still empty, preserving sellable_qty and all other data. Grant dates
+    are also propagated from partially-sold lots to their historical SaleLot records.
+    """
+    updated = 0
+    for data in lot_data:
+        grant_date = data.get("grant_date")
+        if grant_date is None:
+            continue
+        key = {
+            "symbol": data["symbol"],
+            "plan_type": data["plan_type"],
+            "date_acquired": data["date_acquired"],
+            "cost_basis": data["cost_basis"],
+        }
+        updated += Lot.objects.filter(**key, grant_date__isnull=True).update(grant_date=grant_date)
+        SaleLot.objects.filter(**key, grant_date__isnull=True).update(grant_date=grant_date)
+
+    for lot in Lot.objects.exclude(grant_date__isnull=True):
+        SaleLot.objects.filter(original_lot_id=lot.pk, grant_date__isnull=True).update(
+            grant_date=lot.grant_date
+        )
+    return updated
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -156,6 +193,7 @@ def _execute_sale(selected: list, sale_price: Decimal, eur_usd: Decimal) -> "dic
             symbol=lot.symbol,
             plan_type=lot.plan_type,
             date_acquired=lot.date_acquired,
+            grant_date=lot.grant_date,
             qty_sold=entry["qty"],
             cost_basis=lot.cost_basis,
             tax_status=lot.tax_status,
@@ -379,6 +417,7 @@ def export_view(request):
             "Symbol": lot.symbol,
             "Plan Type": "Rest. Stock" if lot.plan_type == Lot.RSU else lot.plan_type,
             "Date Acquired": lot.date_acquired.strftime("%m/%d/%Y"),
+            "Grant Date": lot.grant_date.strftime("%m/%d/%Y") if lot.grant_date else "",
             "Sellable Qty.": float(lot.sellable_qty),
             "Est. Cost Basis (per share):": float(lot.cost_basis),
             "Tax Status.1": lot.tax_status,
@@ -392,6 +431,7 @@ def export_view(request):
             "Symbol",
             "Plan Type",
             "Date Acquired",
+            "Grant Date",
             "Sellable Qty.",
             "Est. Cost Basis (per share):",
             "Tax Status.1",
@@ -475,6 +515,7 @@ def sell_undo_view(request):
                     symbol=slot.symbol,
                     plan_type=slot.plan_type,
                     date_acquired=slot.date_acquired,
+                    grant_date=slot.grant_date,
                     sellable_qty=slot.qty_sold,
                     cost_basis=slot.cost_basis,
                     tax_status=slot.tax_status,

@@ -17,6 +17,7 @@ def _row_to_lot(row) -> dict:
         "symbol": str(row["Symbol"]),
         "plan_type": "RSU" if row["Plan Type"] == "Rest. Stock" else "ESPP",
         "date_acquired": _parse_date(row["Date Acquired"]),
+        "grant_date": _parse_optional_date(row.get("Grant Date")),
         "sellable_qty": Decimal(str(float(row["Sellable Qty."]))),
         "cost_basis": Decimal(str(round(float(row["Est. Cost Basis (per share):"]), 5))),
         "tax_status": str(row["Tax Status.1"]),
@@ -27,3 +28,9 @@ def _parse_date(value) -> date:
     if hasattr(value, "date"):
         return value.date()
     return pd.to_datetime(str(value)).date()
+
+
+def _parse_optional_date(value) -> date | None:
+    if value is None or pd.isna(value):
+        return None
+    return _parse_date(value)

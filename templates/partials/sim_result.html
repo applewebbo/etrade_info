@@ -25,11 +25,12 @@
   <p class="sim-detail-label">Dettaglio per posizione</p>
   <figure>
   <table>
-    <thead><tr><th>Data</th><th>Qtà</th><th>Costo acquisto</th><th>Plusvalenza</th></tr></thead>
+    <thead><tr><th>Data</th><th>Assegnazione</th><th>Qtà</th><th>Costo acquisto</th><th>Plusvalenza</th></tr></thead>
     <tbody>
     {% for entry in result.per_lot %}
     <tr class="sim-row-{% if entry.lot.plan_type == 'ESPP' %}espp{% else %}rsu{% endif %}">
       <td>{{ entry.lot.date_acquired|date:"d/m/y" }}</td>
+      <td>{{ entry.lot.grant_date|date:"d/m/y"|default:"—" }}</td>
       <td>{{ entry.qty }}</td>
       <td>${{ entry.lot.cost_basis|floatformat:4 }}</td>
       <td>${{ entry.gain_usd|floatformat:2 }}</td>

@@ -74,6 +74,7 @@ class TestExportView:
             "Symbol",
             "Plan Type",
             "Date Acquired",
+            "Grant Date",
             "Sellable Qty.",
             "Est. Cost Basis (per share):",
             "Tax Status.1",
@@ -542,6 +543,34 @@ class TestIvafeView:
         response = client.get("/ivafe/")
         assert response.status_code == 200
         assert b"IVAFE" in response.content
+
+    def test_page_shows_partial_year_lot(self, client, mock_ivafe_data):
+        from datetime import date
+
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2025, 6, 1)})
+        response = client.get("/ivafe/")
+        assert response.status_code == 200
+
+    def test_page_handles_empty_price_dataframe(self, client, monkeypatch):
+        import bdi_rates
+
+        monkeypatch.setattr(
+            bdi_rates,
+            "get_bdi_eur_usd_rate",
+            lambda target_date, fetcher=None: Decimal("0.9689"),
+        )
+        import yfinance as yf
+
+        class _EmptyDF:
+            @property
+            def empty(self):
+                return True
+
+        monkeypatch.setattr(yf, "download", lambda *a, **kw: _EmptyDF())
+        response = client.get("/ivafe/")
+        assert response.status_code == 200
 
     def test_page_handles_bdi_unavailable(self, client, monkeypatch):
         import bdi_rates

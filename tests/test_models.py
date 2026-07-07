@@ -58,6 +58,86 @@ class TestImportLots:
         import_lots([LOT_DEFAULTS, new_lot], mode="incremental")
         assert Lot.objects.count() == 2
 
+    def test_overwrite_stores_grant_date(self):
+        from app import Lot, import_lots
+
+        import_lots([{**LOT_DEFAULTS, "grant_date": date(2019, 5, 1)}], mode="overwrite")
+        assert Lot.objects.first().grant_date == date(2019, 5, 1)
+
+
+@pytest.mark.django_db
+class TestUpdateGrant:
+    def test_fills_grant_date_on_existing_lot(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        import_lots([{**LOT_DEFAULTS, "grant_date": date(2019, 5, 1)}], mode="update_grant")
+        assert Lot.objects.first().grant_date == date(2019, 5, 1)
+
+    def test_preserves_sellable_qty(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "sellable_qty": Decimal("3")})
+        import_lots([{**LOT_DEFAULTS, "grant_date": date(2019, 5, 1)}], mode="update_grant")
+        lot = Lot.objects.first()
+        assert lot.sellable_qty == Decimal("3")
+        assert lot.grant_date == date(2019, 5, 1)
+
+    def test_does_not_create_new_lots(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        other = {**LOT_DEFAULTS, "date_acquired": date(2099, 1, 1), "grant_date": date(2098, 1, 1)}
+        import_lots([other], mode="update_grant")
+        assert Lot.objects.count() == 1
+        assert Lot.objects.first().grant_date is None
+
+    def test_skips_rows_without_grant_date(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        updated = import_lots([{**LOT_DEFAULTS, "grant_date": None}], mode="update_grant")
+        assert updated == 0
+        assert Lot.objects.first().grant_date is None
+
+    def test_fills_grant_date_on_matching_sale_lot(self):
+        from app import Sale, SaleLot, import_lots
+
+        sale = Sale.objects.create(**SALE_DEFAULTS)
+        SaleLot.objects.create(
+            sale=sale,
+            original_lot_id=999,
+            symbol="AAPL",
+            plan_type="ESPP",
+            date_acquired=date(2020, 1, 1),
+            qty_sold=Decimal("10.0000"),
+            cost_basis=Decimal("100.00000"),
+            tax_status="Long Term",
+            gain_usd=Decimal("1000.00000"),
+        )
+        import_lots([{**LOT_DEFAULTS, "grant_date": date(2019, 5, 1)}], mode="update_grant")
+        assert SaleLot.objects.first().grant_date == date(2019, 5, 1)
+
+    def test_propagates_from_lot_to_sale_lot_on_partial_sale(self):
+        from app import Lot, Sale, SaleLot, import_lots
+
+        lot = Lot.objects.create(**LOT_DEFAULTS)
+        sale = Sale.objects.create(**SALE_DEFAULTS)
+        # partial sale with a different cost basis so the xlsx key would not match the SaleLot
+        SaleLot.objects.create(
+            sale=sale,
+            original_lot_id=lot.pk,
+            symbol="AAPL",
+            plan_type="ESPP",
+            date_acquired=date(2020, 1, 1),
+            qty_sold=Decimal("2.0000"),
+            cost_basis=Decimal("999.00000"),
+            tax_status="Long Term",
+            gain_usd=Decimal("10.00000"),
+        )
+        import_lots([{**LOT_DEFAULTS, "grant_date": date(2019, 5, 1)}], mode="update_grant")
+        assert SaleLot.objects.first().grant_date == date(2019, 5, 1)
+
 
 @pytest.mark.django_db
 class TestLot:

@@ -57,3 +57,30 @@ class TestGetBdiEurUsdRate:
         fetcher = _fetcher([{"referenceDate": "2025-01-02", "avgRate": "0.9689"}])
         result = get_bdi_eur_usd_rate(datetime.date(2025, 1, 1), fetcher=fetcher)
         assert result == Decimal("0.9689")
+
+
+class TestDefaultFetcher:
+    def test_calls_bdi_endpoint_and_returns_json(self, monkeypatch):
+        import requests
+
+        import bdi_rates
+
+        captured = {}
+
+        class _FakeResponse:
+            def raise_for_status(self):
+                captured["raised"] = True
+
+            def json(self):
+                return {"rates": [{"avgRate": "0.9689"}]}
+
+        def fake_get(url, params, headers, timeout):
+            captured.update(url=url, params=params, headers=headers, timeout=timeout)
+            return _FakeResponse()
+
+        monkeypatch.setattr(requests, "get", fake_get)
+        result = bdi_rates._default_fetcher({"startDate": "2025-01-01"})
+        assert result == {"rates": [{"avgRate": "0.9689"}]}
+        assert captured["url"] == bdi_rates._BDI_URL
+        assert captured["params"] == {"startDate": "2025-01-01"}
+        assert captured["raised"] is True

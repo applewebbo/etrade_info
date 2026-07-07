@@ -82,6 +82,7 @@
     <tr>
       <th>Tipo</th>
       <th>Data acquisto</th>
+      <th>Data assegnazione</th>
       <th>Azioni</th>
       <th>Costo acquisto</th>
       <th>Valore oggi</th>
@@ -96,6 +97,7 @@
   <tr>
     <td>{{ row.lot.plan_type }}</td>
     <td>{{ row.lot.date_acquired|date:"d/m/y" }}</td>
+    <td>{{ row.lot.grant_date|date:"d/m/y"|default:"—" }}</td>
     <td>{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
     <td>${{ row.lot.cost_basis|floatformat:4 }}</td>
     <td>€{{ row.value_eur|floatformat:2 }}</td>
@@ -147,12 +149,13 @@
     <figure>
     <table>
       <thead>
-        <tr><th>Data</th><th>Tipo</th><th>Qtà</th><th>Costo</th><th>Guadagno</th></tr>
+        <tr><th>Data</th><th>Assegnazione</th><th>Tipo</th><th>Qtà</th><th>Costo</th><th>Guadagno</th></tr>
       </thead>
       <tbody>
       {% for sl in sale.lots.all %}
       <tr class="sim-row-{% if sl.plan_type == 'ESPP' %}espp{% else %}rsu{% endif %}">
         <td>{{ sl.date_acquired|date:"d/m/y" }}</td>
+        <td>{{ sl.grant_date|date:"d/m/y"|default:"—" }}</td>
         <td>{{ sl.plan_type }}</td>
         <td>{{ sl.qty_sold|floatformat:"-4" }}</td>
         <td>${{ sl.cost_basis|floatformat:4 }}</td>

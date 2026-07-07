@@ -82,6 +82,20 @@ class TestParseXlsx:
         assert rsu["date_acquired"] == date(2016, 10, 15)
         assert rsu["cost_basis"] == Decimal("28.575")
 
+    def test_grant_date_parsed(self, sample_xlsx):
+        from xlsx_parser import parse_sellable_xlsx
+
+        result = parse_sellable_xlsx(sample_xlsx)
+        espp = next(lot for lot in result if lot["plan_type"] == "ESPP")
+        assert espp["grant_date"] == date(2014, 8, 1)
+
+    def test_grant_date_none_when_missing(self, sample_xlsx):
+        from xlsx_parser import parse_sellable_xlsx
+
+        result = parse_sellable_xlsx(sample_xlsx)
+        rsu = next(lot for lot in result if lot["plan_type"] == "RSU")
+        assert rsu["grant_date"] is None
+
     def test_all_required_keys_present(self, sample_xlsx):
         from xlsx_parser import parse_sellable_xlsx
 
@@ -90,6 +104,7 @@ class TestParseXlsx:
             "symbol",
             "plan_type",
             "date_acquired",
+            "grant_date",
             "sellable_qty",
             "cost_basis",
             "tax_status",
