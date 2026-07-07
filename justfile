@@ -133,6 +133,7 @@ dist:
     mkdir -p "dist/Etrade Portfolio"
     cp start.command uninstall.command \
        app.py prices.py tax_engine.py xlsx_parser.py \
+       bdi_rates.py ivafe_engine.py \
        pyproject.toml uv.lock ISTRUZIONI.txt \
        "dist/Etrade Portfolio/"
     cp -r templates static migrations "dist/Etrade Portfolio/"
