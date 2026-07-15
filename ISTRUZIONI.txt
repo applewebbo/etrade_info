@@ -11,8 +11,18 @@ INSTALLAZIONE E PRIMO AVVIO
 1. Copia la cartella "Etrade Portfolio" dove preferisci (es. Documenti)
 2. Doppio clic su "start.command"
 
-   Se macOS blocca l'apertura:
-   tasto destro su start.command → Apri → Apri
+   Se macOS blocca l'apertura (avviso "sviluppatore non
+   identificato"), sbloccalo UNA SOLA VOLTA così:
+
+   - macOS Sequoia (15) o più recente, es. Tahoe (26):
+     Impostazioni di Sistema → Privacy e Sicurezza → scorri in
+     fondo alla sezione "Sicurezza" → "Apri comunque" → conferma.
+     Poi torna a fare doppio clic su "start.command".
+
+   - macOS più vecchi (fino a Sonoma 14):
+     tasto destro su "start.command" → Apri → Apri.
+
+   Va fatto solo al primissimo avvio; i successivi partono diretti.
 
    Al primo avvio lo script installa automaticamente uv (gestore
    Python) e le dipendenze (~1-2 minuti). I lanci successivi sono
