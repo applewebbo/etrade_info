@@ -745,3 +745,41 @@ class TestIvafeView:
         )
         response = client.get("/ivafe/")
         assert response.status_code == 200
+
+
+@pytest.mark.django_db
+class TestReleasesView:
+    def test_page_renders(self, client):
+        response = client.get("/novita/")
+        assert response.status_code == 200
+
+    def test_context_carries_the_release_list(self, client):
+        from releases import RELEASES
+
+        response = client.get("/novita/")
+        assert response.context["releases"] == RELEASES
+
+    def test_footer_version_links_to_the_page(self, client):
+        from releases import RELEASES
+
+        response = client.get("/")
+        content = response.content.decode()
+        assert 'href="/novita/"' in content
+        assert RELEASES[0]["version"] in content
+
+
+class TestReleasesData:
+    def test_every_entry_is_well_formed(self):
+        from releases import RELEASES
+
+        for entry in RELEASES:
+            assert entry["version"]
+            assert not entry["version"].startswith("v")
+            assert 2 <= len(entry["notes"]) <= 4
+            assert all(note.strip() for note in entry["notes"])
+
+    def test_entries_are_ordered_newest_first(self):
+        from releases import RELEASES
+
+        dates = [entry["date"] for entry in RELEASES]
+        assert dates == sorted(dates, reverse=True)

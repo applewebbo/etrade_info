@@ -38,6 +38,7 @@ app = Django(
             "OPTIONS": {
                 "context_processors": [
                     "django.template.context_processors.request",
+                    "releases.current_version",
                 ]
             },
         }
@@ -728,6 +729,15 @@ def ivafe_view(request):
             }
         )
     return render(request, "ivafe.html", ctx)
+
+
+@app.route("/novita/")
+def releases_view(request):
+    from django.shortcuts import render
+
+    from releases import RELEASES
+
+    return render(request, "releases.html", {"releases": RELEASES})
 
 
 @app.route("/simulate/lots/")

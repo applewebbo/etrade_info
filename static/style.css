@@ -630,4 +630,36 @@ tbody tr:nth-child(even) th {
   color: var(--pico-color-slate-500);
 }
 .ivafe-legal p { margin-bottom: .75rem; }
+
+/* Footer */
+.site-footer {
+  margin-top: 2.5rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--pico-color-slate-200);
+  text-align: center;
+  font-size: .8rem;
+}
+.site-footer a { color: var(--pico-muted-color); }
+
+/* Releases page */
+.releases-subtitle {
+  color: var(--pico-muted-color);
+  margin-top: -.5rem;
+  margin-bottom: 1.5rem;
+  font-size: .9rem;
+}
+.releases-list { list-style: none; padding-left: 0; }
+.releases-item {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--pico-color-slate-200);
+}
+.releases-item-header {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+.releases-version { margin-bottom: 0; }
+.releases-date { color: var(--pico-muted-color); font-size: .85rem; }
 .ivafe-legal p:last-child { margin-bottom: 0; }
