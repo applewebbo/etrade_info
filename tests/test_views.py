@@ -422,6 +422,12 @@ class TestSimulateLotsView:
 
 @pytest.mark.django_db
 class TestDashboardView:
+    def test_page_links_blades_css_not_pico(self, client, mock_prices):
+        response = client.get("/")
+        content = response.content.decode()
+        assert "/static/blades.min.css" in content
+        assert "/static/pico.min.css" not in content
+
     def test_dashboard_with_lots_and_prices(self, client, mock_prices):
         from app import Lot
 
