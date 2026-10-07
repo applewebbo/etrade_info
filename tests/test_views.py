@@ -759,13 +759,11 @@ class TestTasseView:
 
 @pytest.mark.django_db
 class TestTasseYearSelector:
-    def test_single_year_shows_no_selector(self, client, mock_ivafe_data):
-        from app import Lot
-
-        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2025, 1, 1)})
+    def test_current_year_always_included_and_selectable(self, client, mock_ivafe_data):
         response = client.get("/tasse/")
         assert response.status_code == 200
-        assert b"<select" not in response.content
+        assert b"<select" in response.content
+        assert b"2026" in response.content
 
     def test_multiple_years_shows_selector_with_all_options(self, client, mock_ivafe_data):
         from app import Lot
@@ -800,6 +798,33 @@ class TestTasseYearSelector:
         response = client.get("/tasse/", {"year": "1999"})
         assert response.status_code == 200
         assert b"2025" in response.content
+
+
+@pytest.mark.django_db
+class TestTasseInProgressYearPreview:
+    def test_current_year_uses_live_price_and_rate(self, client, mock_ivafe_data, mock_prices):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/", {"year": 2026})
+        assert response.status_code == 200
+        assert b"200,00" in response.content  # live AAPL price from mock_prices
+
+    def test_current_year_shows_provisional_disclaimer(self, client, mock_ivafe_data, mock_prices):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/", {"year": 2026})
+        assert response.status_code == 200
+        assert b"provvisori" in response.content.lower()
+
+    def test_past_year_does_not_show_provisional_disclaimer(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"provvisori" not in response.content.lower()
 
 
 SALE_DEFAULTS = dict(

@@ -667,15 +667,16 @@ def sell_undo_view(request):
 def _tax_year_options(current_year: int) -> list[int]:
     """Contiguous years for which a tax computation can be requested.
 
-    Spans from the earliest year with any Lot or Sale data up to the last
-    completed calendar year (the current year can't be declared yet).
+    Spans from the earliest year with any Lot or Sale data up to the current,
+    still in-progress year (shown as a provisional preview of next year's
+    filing, assuming no further buys/sells).
     """
     last_complete_year = current_year - 1
     lot_years = Lot.objects.values_list("date_acquired__year", flat=True)
     sale_years = Sale.objects.values_list("sale_date__year", flat=True)
     relevant_years = {y for y in [*lot_years, *sale_years]}
     earliest = min(relevant_years) if relevant_years else last_complete_year
-    return list(range(earliest, last_complete_year + 1))
+    return list(range(earliest, current_year + 1))
 
 
 def _parse_tax_year(raw: str | None, available_years: list[int], default: int) -> int:
@@ -717,10 +718,18 @@ def tasse_view(request):
         except Exception:
             return None
 
+    is_in_progress_year = year == current_year
+
     price_start = _aapl_price(datetime.date(year, 1, 1), datetime.date(year, 1, 10), 0)
-    price_end = _aapl_price(datetime.date(year, 12, 24), datetime.date(year, 12, 31), -1)
     rate_start = get_bdi_eur_usd_rate(datetime.date(year, 1, 10))
-    rate_end = get_bdi_eur_usd_rate(datetime.date(year, 12, 31))
+    if is_in_progress_year:
+        from prices import get_eur_usd_rate, get_stock_price_usd
+
+        price_end = get_stock_price_usd()
+        rate_end = get_eur_usd_rate()
+    else:
+        price_end = _aapl_price(datetime.date(year, 12, 24), datetime.date(year, 12, 31), -1)
+        rate_end = get_bdi_eur_usd_rate(datetime.date(year, 12, 31))
 
     data_available = all([price_start, price_end, rate_start, rate_end])
 
@@ -741,6 +750,7 @@ def tasse_view(request):
         "available_years": available_years,
         "has_lots": bool(lots),
         "data_available": data_available,
+        "is_in_progress_year": is_in_progress_year,
         "sales": sales,
         "sales_totals": sales_totals,
     }

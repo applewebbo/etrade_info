@@ -16,6 +16,10 @@
   {% endif %}
 </div>
 
+{% if is_in_progress_year %}
+<p class="ivafe-disclaimer tasse-provisional-banner">⚠ L'anno {{ year }} è ancora in corso: questi sono dati provvisori, una stima di quanto dovuto se non vengono acquistate o vendute altre azioni prima della fine dell'anno. I valori finali potranno cambiare.</p>
+{% endif %}
+
 <section class="tasse-section">
 <h3 class="tasse-section-title">IVAFE {{ year }}</h3>
 <p class="ivafe-subtitle">Imposta sul Valore delle Attività Finanziarie detenute all'Estero — aliquota 2‰ proporzionale ai giorni di detenzione.</p>
@@ -40,7 +44,7 @@
     <small>AAPL ${{ price_start|floatformat:2 }}</small>
   </div>
   <div class="summary-card card-rsu">
-    <small>Valore al 31 dicembre {{ year }} <span class="ivafe-rate-note">(€/$ {{ rate_end|floatformat:4 }})</span></small>
+    <small>{% if is_in_progress_year %}Valore odierno (stima 31/12){% else %}Valore al 31 dicembre {{ year }}{% endif %} <span class="ivafe-rate-note">(€/$ {{ rate_end|floatformat:4 }})</span></small>
     <strong>€{{ total_value_end_eur|floatformat:2 }}</strong>
     <small>AAPL ${{ price_end|floatformat:2 }}</small>
   </div>
