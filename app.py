@@ -125,19 +125,21 @@ def import_lots(lot_data: list[dict], mode: str = "overwrite") -> int:
 
     created = 0
     for data in lot_data:
-        _, was_created = Lot.objects.get_or_create(
-            symbol=data["symbol"],
-            plan_type=data["plan_type"],
-            date_acquired=data["date_acquired"],
-            cost_basis=data["cost_basis"],
-            defaults={
-                "sellable_qty": data["sellable_qty"],
-                "tax_status": data["tax_status"],
-                "grant_date": data.get("grant_date"),
-            },
+        key = {
+            "symbol": data["symbol"],
+            "plan_type": data["plan_type"],
+            "date_acquired": data["date_acquired"],
+            "cost_basis": data["cost_basis"],
+        }
+        if Lot.objects.filter(**key).exists():
+            continue
+        Lot.objects.create(
+            **key,
+            sellable_qty=data["sellable_qty"],
+            tax_status=data["tax_status"],
+            grant_date=data.get("grant_date"),
         )
-        if was_created:
-            created += 1
+        created += 1
     return created
 
 

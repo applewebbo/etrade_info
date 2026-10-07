@@ -58,6 +58,24 @@ class TestImportLots:
         import_lots([LOT_DEFAULTS, new_lot], mode="incremental")
         assert Lot.objects.count() == 2
 
+    def test_incremental_does_not_crash_on_multiple_existing_matches(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        Lot.objects.create(**LOT_DEFAULTS)
+        import_lots([LOT_DEFAULTS], mode="incremental")
+        assert Lot.objects.count() == 2
+
+    def test_incremental_still_adds_new_lot_when_other_keys_have_duplicates(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        Lot.objects.create(**LOT_DEFAULTS)
+        new_lot = {**LOT_DEFAULTS, "date_acquired": date(2022, 3, 15)}
+        created = import_lots([LOT_DEFAULTS, new_lot], mode="incremental")
+        assert Lot.objects.count() == 3
+        assert created == 1
+
     def test_overwrite_stores_grant_date(self):
         from app import Lot, import_lots
 
