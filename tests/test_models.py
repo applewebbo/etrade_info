@@ -76,6 +76,30 @@ class TestImportLots:
         assert Lot.objects.count() == 3
         assert created == 1
 
+    def test_incremental_reconciles_cost_basis_on_single_match(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        revised = {**LOT_DEFAULTS, "cost_basis": Decimal("90.00000")}
+        created = import_lots([revised], mode="incremental")
+        assert created == 0
+        assert Lot.objects.count() == 1
+        assert Lot.objects.first().cost_basis == Decimal("90.00000")
+
+    def test_incremental_leaves_ambiguous_duplicates_untouched(self):
+        from app import Lot, import_lots
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        Lot.objects.create(**LOT_DEFAULTS)
+        revised = {**LOT_DEFAULTS, "cost_basis": Decimal("90.00000")}
+        created = import_lots([revised], mode="incremental")
+        assert created == 0
+        assert Lot.objects.count() == 2
+        assert list(Lot.objects.values_list("cost_basis", flat=True)) == [
+            LOT_DEFAULTS["cost_basis"],
+            LOT_DEFAULTS["cost_basis"],
+        ]
+
     def test_overwrite_stores_grant_date(self):
         from app import Lot, import_lots
 
