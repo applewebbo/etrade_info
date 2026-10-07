@@ -663,3 +663,21 @@ tbody tr:nth-child(even) th {
 .releases-version { margin-bottom: 0; }
 .releases-date { color: var(--pico-muted-color); font-size: .85rem; }
 .ivafe-legal p:last-child { margin-bottom: 0; }
+
+/* Tasse page */
+.tasse-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.tasse-header h2 { margin-bottom: 0; }
+.tasse-year-form {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 50%;
+}
+.tasse-year-form label { white-space: nowrap; margin-bottom: 0; }
+.tasse-year-form select { margin-bottom: 0; width: 100%; }

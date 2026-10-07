@@ -1,8 +1,23 @@
 {% extends "base.html" %}
-{% block title %}IVAFE {{ year }} — Etrade Portfolio{% endblock %}
+{% block title %}Tasse {{ year }} — Etrade Portfolio{% endblock %}
 {% block content %}
 
-<h2>IVAFE {{ year }}</h2>
+<div class="tasse-header">
+  <h2>Tasse {{ year }}</h2>
+  {% if available_years|length > 1 %}
+  <form method="get" class="tasse-year-form">
+    <label for="year-select">Anno di riferimento</label>
+    <select id="year-select" name="year" onchange="this.form.submit()">
+      {% for y in available_years %}
+      <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  {% endif %}
+</div>
+
+<section class="tasse-section">
+<h3 class="tasse-section-title">IVAFE {{ year }}</h3>
 <p class="ivafe-subtitle">Imposta sul Valore delle Attività Finanziarie detenute all'Estero — aliquota 2‰ proporzionale ai giorni di detenzione.</p>
 
 {% if not has_lots %}
@@ -69,7 +84,7 @@
 </div>
 
 <!-- Guida Quadro RW Modello 730 -->
-<h3 class="ivafe-section-title">Esempio compilazione Quadro RW — Modello 730/{{ year|add:1 }}</h3>
+<h4 class="ivafe-section-title">Esempio compilazione Quadro RW — Modello 730/{{ year|add:1 }}</h4>
 <p class="ivafe-rw-intro">
   Ogni tipologia di detenzione va riportata su una riga del Quadro RW.
   Le azioni detenute per tutto l'anno vengono raggruppate in un'unica riga;
@@ -130,6 +145,9 @@
   <p class="ivafe-disclaimer">⚠ La stima è basata sui lotti attualmente presenti nel database. Lotti venduti durante il {{ year }} e rimossi non sono inclusi nel calcolo.</p>
 </div>
 
+{% endif %}
+</section>
+
 <div class="ivafe-legal">
   <p><strong>AVVERTENZA LEGALE — LIMITAZIONE DI RESPONSABILITÀ</strong></p>
   <p>
@@ -153,5 +171,4 @@
   </p>
 </div>
 
-{% endif %}
 {% endblock %}

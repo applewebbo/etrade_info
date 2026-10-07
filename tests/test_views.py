@@ -679,24 +679,28 @@ def mock_ivafe_data(monkeypatch):
 
 
 @pytest.mark.django_db
-class TestIvafeView:
+class TestTasseView:
     def test_get_returns_200(self, client, mock_ivafe_data):
-        response = client.get("/ivafe/")
+        response = client.get("/tasse/")
         assert response.status_code == 200
 
-    def test_page_shows_ivafe_title(self, client, mock_ivafe_data):
-        response = client.get("/ivafe/")
+    def test_page_shows_tasse_title(self, client, mock_ivafe_data):
+        response = client.get("/tasse/")
+        assert b"Tasse" in response.content
+
+    def test_page_shows_ivafe_section(self, client, mock_ivafe_data):
+        response = client.get("/tasse/")
         assert b"IVAFE" in response.content
 
     def test_page_shows_no_lots_message_when_empty(self, client, mock_ivafe_data):
-        response = client.get("/ivafe/")
+        response = client.get("/tasse/")
         assert b"lotti" in response.content.lower() or response.status_code == 200
 
     def test_page_shows_start_and_end_values_with_lots(self, client, mock_ivafe_data):
         from app import Lot
 
         Lot.objects.create(**LOT_DEFAULTS)
-        response = client.get("/ivafe/")
+        response = client.get("/tasse/")
         assert response.status_code == 200
         assert b"2025" in response.content
 
@@ -704,7 +708,7 @@ class TestIvafeView:
         from app import Lot
 
         Lot.objects.create(**LOT_DEFAULTS)
-        response = client.get("/ivafe/")
+        response = client.get("/tasse/")
         assert response.status_code == 200
         assert b"IVAFE" in response.content
 
@@ -714,7 +718,7 @@ class TestIvafeView:
         from app import Lot
 
         Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2025, 6, 1)})
-        response = client.get("/ivafe/")
+        response = client.get("/tasse/")
         assert response.status_code == 200
 
     def test_page_handles_empty_price_dataframe(self, client, monkeypatch):
@@ -733,7 +737,7 @@ class TestIvafeView:
                 return True
 
         monkeypatch.setattr(yf, "download", lambda *a, **kw: _EmptyDF())
-        response = client.get("/ivafe/")
+        response = client.get("/tasse/")
         assert response.status_code == 200
 
     def test_page_handles_bdi_unavailable(self, client, monkeypatch):
@@ -749,8 +753,53 @@ class TestIvafeView:
         monkeypatch.setattr(
             yf, "download", lambda *a, **kw: (_ for _ in ()).throw(Exception("fail"))
         )
-        response = client.get("/ivafe/")
+        response = client.get("/tasse/")
         assert response.status_code == 200
+
+
+@pytest.mark.django_db
+class TestTasseYearSelector:
+    def test_single_year_shows_no_selector(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2025, 1, 1)})
+        response = client.get("/tasse/")
+        assert response.status_code == 200
+        assert b"<select" not in response.content
+
+    def test_multiple_years_shows_selector_with_all_options(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/")
+        assert response.status_code == 200
+        assert b"<select" in response.content
+        assert b"2020" in response.content
+        assert b"2025" in response.content
+
+    def test_selecting_year_changes_computation_year(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/", {"year": 2021})
+        assert response.status_code == 200
+        assert b"2021" in response.content
+
+    def test_invalid_year_falls_back_to_default(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/", {"year": "not-a-year"})
+        assert response.status_code == 200
+        assert b"2025" in response.content
+
+    def test_out_of_range_year_falls_back_to_default(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/", {"year": "1999"})
+        assert response.status_code == 200
+        assert b"2025" in response.content
 
 
 @pytest.mark.django_db

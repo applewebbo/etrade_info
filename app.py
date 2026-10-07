@@ -660,8 +660,30 @@ def sell_undo_view(request):
     return response
 
 
-@app.route("/ivafe/")
-def ivafe_view(request):
+def _tax_year_options(current_year: int) -> list[int]:
+    """Contiguous years for which a tax computation can be requested.
+
+    Spans from the earliest year with any Lot or Sale data up to the last
+    completed calendar year (the current year can't be declared yet).
+    """
+    last_complete_year = current_year - 1
+    lot_years = Lot.objects.values_list("date_acquired__year", flat=True)
+    sale_years = Sale.objects.values_list("sale_date__year", flat=True)
+    relevant_years = {y for y in [*lot_years, *sale_years]}
+    earliest = min(relevant_years) if relevant_years else last_complete_year
+    return list(range(earliest, last_complete_year + 1))
+
+
+def _parse_tax_year(raw: str | None, available_years: list[int], default: int) -> int:
+    try:
+        year = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return year if year in available_years else default
+
+
+@app.route("/tasse/")
+def tasse_view(request):
     import datetime
 
     import yfinance as yf
@@ -670,7 +692,10 @@ def ivafe_view(request):
     from bdi_rates import get_bdi_eur_usd_rate
     from ivafe_engine import calculate_ivafe
 
-    year = datetime.date.today().year - 1
+    current_year = datetime.date.today().year
+    default_year = current_year - 1
+    available_years = _tax_year_options(current_year)
+    year = _parse_tax_year(request.GET.get("year"), available_years, default_year)
     lots = list(Lot.objects.all())
 
     def _aapl_price(start: datetime.date, end: datetime.date, idx: int) -> Decimal | None:
@@ -695,12 +720,17 @@ def ivafe_view(request):
 
     data_available = all([price_start, price_end, rate_start, rate_end])
 
-    ctx = {"year": year, "has_lots": bool(lots), "data_available": data_available}
+    ctx = {
+        "year": year,
+        "available_years": available_years,
+        "has_lots": bool(lots),
+        "data_available": data_available,
+    }
     if data_available and lots:
         ivafe_data = calculate_ivafe(lots, price_start, price_end, rate_start, rate_end, year)
         rows = ivafe_data["rows"]
-        full_rows = [r for r in rows if r["days_held"] == 365]
-        partial_rows = [r for r in rows if r["days_held"] < 365]
+        full_rows = [r for r in rows if r["value_start_eur"] is not None]
+        partial_rows = [r for r in rows if r["value_start_eur"] is None]
         for r in partial_rows:
             rate_acq = get_bdi_eur_usd_rate(r["lot"].date_acquired)
             r["value_start_eur"] = (
@@ -728,7 +758,7 @@ def ivafe_view(request):
                 **ivafe_data,
             }
         )
-    return render(request, "ivafe.html", ctx)
+    return render(request, "tasse.html", ctx)
 
 
 @app.route("/novita/")
