@@ -15,8 +15,17 @@ default:
 
 # Update all dependencies
 [group('setup')]
-@update:
+@update: update-assets
     uv sync --upgrade
+
+# Re-download vendored CSS/JS libraries (htmx, Alpine.js, Pico CSS)
+[group('setup')]
+update-assets:
+    curl -fsSL https://cdn.jsdelivr.net/npm/htmx.org/dist/htmx.min.js -o static/htmx.min.js
+    curl -fsSL https://cdn.jsdelivr.net/npm/alpinejs/dist/cdn.min.js -o static/alpine.min.js
+    curl -fsSL https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css -o static/pico.min.css
+    curl -fsSL https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.colors.min.css -o static/pico.colors.min.css
+    echo "✓ Librerie statiche (htmx, Alpine.js, Pico CSS) aggiornate in static/"
 
 # Rebuild lock file
 [group('setup')]
