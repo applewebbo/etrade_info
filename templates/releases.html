@@ -9,10 +9,10 @@
   {% for release in releases %}
   <li class="releases-item">
     <div class="releases-item-header">
-      <h3 class="releases-version">v{{ release.version }}</h3>
+      <span class="releases-version-badge">v{{ release.version }}</span>
       <time datetime="{{ release.date|date:'Y-m-d' }}" class="releases-date">{{ release.date|date:"j F Y" }}</time>
     </div>
-    <ul>
+    <ul class="releases-notes">
       {% for note in release.notes %}<li>{{ note }}</li>{% endfor %}
     </ul>
   </li>

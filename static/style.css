@@ -1,10 +1,32 @@
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/fonts/inter-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/static/fonts/inter-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/static/fonts/inter-700.woff2") format("woff2");
+}
+
 button, [type="submit"], [type="button"], [role="button"] {
   border-radius: .375rem !important;
 }
 
 :root {
   font-size: 14px;
-  --pico-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --pico-font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 }
 
 .site-header {
@@ -33,7 +55,7 @@ body > main {
 }
 
 .site-title {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -636,10 +658,30 @@ tbody tr:nth-child(even) th {
   margin-top: 2.5rem;
   padding: 1.25rem 0;
   border-top: 1px solid var(--pico-color-slate-200);
-  text-align: center;
   font-size: .8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem;
 }
-.site-footer a { color: var(--pico-muted-color); }
+.site-footer-copyright { color: var(--pico-muted-color); }
+.site-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.site-footer a {
+  color: var(--pico-muted-color);
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.footer-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
 
 /* Releases page */
 .releases-subtitle {
@@ -650,18 +692,40 @@ tbody tr:nth-child(even) th {
 }
 .releases-list { list-style: none; padding-left: 0; }
 .releases-item {
-  margin-bottom: 1.75rem;
-  padding-bottom: 1.25rem;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
   border-bottom: 1px solid var(--pico-color-slate-200);
+}
+.releases-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 .releases-item-header {
   display: flex;
-  align-items: baseline;
-  gap: .75rem;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
+  margin-bottom: 1.25rem;
 }
-.releases-version { margin-bottom: 0; }
+.releases-version-badge {
+  display: inline-block;
+  padding: .3rem .85rem;
+  border-radius: 999px;
+  background-color: var(--pico-color-slate-100);
+  color: var(--pico-color-slate-800);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
 .releases-date { color: var(--pico-muted-color); font-size: .85rem; }
+.releases-notes {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  margin-bottom: 0;
+}
+.releases-notes li { margin-bottom: 0; line-height: 1.6; }
 .ivafe-legal p:last-child { margin-bottom: 0; }
 
 /* Tasse page */

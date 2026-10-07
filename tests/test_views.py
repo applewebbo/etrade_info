@@ -908,6 +908,16 @@ class TestReleasesView:
         assert 'href="/novita/"' in content
         assert RELEASES[0]["version"] in content
 
+    def test_footer_links_to_source_repository(self, client):
+        response = client.get("/")
+        content = response.content.decode()
+        assert "codeberg.org/webbografico/stock_info" in content
+
+    def test_footer_shows_copyright(self, client):
+        response = client.get("/")
+        content = response.content.decode()
+        assert "©" in content
+
 
 class TestReleasesData:
     def test_every_entry_is_well_formed(self):

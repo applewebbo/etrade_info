@@ -30,7 +30,17 @@
     </header>
     <main class="container">{% block content %}{% endblock %}</main>
     <footer class="site-footer container">
-      <a href="/novita/">v{{ current_version }}</a>
+      <span class="site-footer-copyright">© {% now "Y" %} Etrade Portfolio</span>
+      <nav class="site-footer-links">
+        <a href="https://codeberg.org/webbografico/stock_info" target="_blank" rel="noopener">
+          <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          Codice sorgente
+        </a>
+        <a href="/novita/">
+          <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.58a2 2 0 0 0 2.83 0l5.59-5.59a2 2 0 0 0 0-2.83Z"></path><circle cx="7.5" cy="7.5" r="1.5"></circle></svg>
+          v{{ current_version }}
+        </a>
+      </nav>
     </footer>
   </body>
 </html>
