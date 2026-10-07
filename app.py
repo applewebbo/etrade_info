@@ -70,6 +70,7 @@ class Lot(models.Model):
 
 class Sale(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
+    sale_date = models.DateField(default=timezone.localdate)
     sale_price_usd = models.DecimalField(max_digits=10, decimal_places=5)
     eur_usd_rate = models.DecimalField(max_digits=10, decimal_places=6)
     gross_proceeds_usd = models.DecimalField(max_digits=14, decimal_places=5)
@@ -192,6 +193,7 @@ def _lot_to_dict(lot: "Lot") -> dict:
 def _sale_to_dict(sale: "Sale") -> dict:
     return {
         "created_at": sale.created_at.isoformat(),
+        "sale_date": sale.sale_date.isoformat(),
         "sale_price_usd": str(sale.sale_price_usd),
         "eur_usd_rate": str(sale.eur_usd_rate),
         "gross_proceeds_usd": str(sale.gross_proceeds_usd),
@@ -248,7 +250,9 @@ def restore_backup(data: dict) -> None:
         )
 
     for sale_data in data.get("sales", []):
+        created_at = datetime.fromisoformat(sale_data["created_at"])
         sale = Sale.objects.create(
+            sale_date=_opt_date(sale_data.get("sale_date")) or created_at.date(),
             sale_price_usd=Decimal(sale_data["sale_price_usd"]),
             eur_usd_rate=Decimal(sale_data["eur_usd_rate"]),
             gross_proceeds_usd=Decimal(sale_data["gross_proceeds_usd"]),
@@ -256,9 +260,7 @@ def restore_backup(data: dict) -> None:
             tax_usd=Decimal(sale_data["tax_usd"]),
         )
         # created_at uses auto_now_add, so it must be restored via update().
-        Sale.objects.filter(pk=sale.pk).update(
-            created_at=datetime.fromisoformat(sale_data["created_at"])
-        )
+        Sale.objects.filter(pk=sale.pk).update(created_at=created_at)
         for sl in sale_data.get("lots", []):
             SaleLot.objects.create(
                 sale=sale,
@@ -277,7 +279,28 @@ def restore_backup(data: dict) -> None:
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 
-def _execute_sale(selected: list, sale_price: Decimal, eur_usd: Decimal) -> "dict | None":
+def _parse_sale_date(raw: str | None) -> date:
+    if raw:
+        try:
+            return date.fromisoformat(raw)
+        except ValueError:
+            pass
+    return timezone.localdate()
+
+
+def _resolve_sale_rate(sale_date: date) -> "Decimal | None":
+    """Live EUR/USD rate for today's sales, Banca d'Italia historical rate otherwise."""
+    from bdi_rates import get_bdi_eur_usd_rate
+    from prices import get_eur_usd_rate
+
+    if sale_date >= timezone.localdate():
+        return get_eur_usd_rate()
+    return get_bdi_eur_usd_rate(sale_date)
+
+
+def _execute_sale(
+    selected: list, sale_price: Decimal, eur_usd: Decimal, sale_date: date | None = None
+) -> "dict | None":
     from tax_engine import calculate_sale_result
 
     if not selected:
@@ -285,6 +308,7 @@ def _execute_sale(selected: list, sale_price: Decimal, eur_usd: Decimal) -> "dic
 
     result = calculate_sale_result(selected, sale_price, eur_usd)
     sale = Sale.objects.create(
+        sale_date=sale_date or timezone.localdate(),
         sale_price_usd=sale_price,
         eur_usd_rate=eur_usd,
         gross_proceeds_usd=result["gross_proceeds_usd"],
@@ -477,6 +501,8 @@ def simulate(request):
     if request.method == "POST":
         default_price = str(price_usd) if price_usd is not None else "0"
         sale_price = Decimal(request.POST.get("sale_price", default_price))
+        sale_date = _parse_sale_date(request.POST.get("sale_date"))
+        sale_eur_usd = _resolve_sale_rate(sale_date)
         selected = []
         for lot in lots:
             key = f"qty_{lot.pk}"
@@ -488,11 +514,22 @@ def simulate(request):
             if qty > 0:
                 selected.append((lot, qty))
 
-        result = calculate_sale_result(selected, sale_price, eur_usd) if selected else None
+        rate_unavailable = sale_eur_usd is None
+        result = (
+            calculate_sale_result(selected, sale_price, sale_eur_usd)
+            if selected and not rate_unavailable
+            else None
+        )
         return render(
             request,
             "partials/sim_result.html",
-            {"result": result, "sale_price": sale_price, "eur_usd": eur_usd},
+            {
+                "result": result,
+                "sale_price": sale_price,
+                "eur_usd": sale_eur_usd,
+                "sale_date": sale_date,
+                "rate_unavailable": rate_unavailable,
+            },
         )
 
     price_eur = (price_usd / eur_usd) if not prices_unavailable else None
@@ -505,6 +542,7 @@ def simulate(request):
             "price_usd": price_usd,
             "price_eur": price_eur,
             "eur_usd": eur_usd,
+            "sale_date": timezone.localdate(),
             "prices_stale": prices_stale,
             "prices_unavailable": prices_unavailable,
         },
@@ -575,7 +613,8 @@ def sell_view(request):
         if qty > 0:
             selected.append((lot, qty))
 
-    _execute_sale(selected, sale_price, eur_usd)
+    sale_date = _parse_sale_date(request.POST.get("sale_date"))
+    _execute_sale(selected, sale_price, eur_usd, sale_date)
 
     response = render(request, "partials/sell_success.html", {})
     response["HX-Trigger"] = "saleComplete"

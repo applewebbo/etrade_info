@@ -30,6 +30,14 @@
       {% endif %}
 
       <label>
+        Data vendita
+        <input type="date" name="sale_date" value="{{ sale_date|date:'Y-m-d' }}"
+               oninput="document.getElementById('sim-form').dispatchEvent(new Event('change'))"
+               form="sim-form" />
+        <small class="sim-live-info">Per date passate il cambio EUR/USD viene recuperato da Banca d'Italia.</small>
+      </label>
+
+      <label>
         Prezzo vendita (USD)
         <input type="number" name="sale_price" step="any" min="0"
                value="{{ price_usd|floatformat:'2u' }}"

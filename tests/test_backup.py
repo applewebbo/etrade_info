@@ -72,6 +72,29 @@ class TestBackupRoundTrip:
         assert slot.grant_date == date(2020, 3, 15)
         assert slot.qty_sold == Decimal("5.0000")
 
+    def test_export_then_restore_preserves_sale_date(self):
+        from app import Sale, export_backup, restore_backup
+
+        sale = self._make_sale()
+        sale.sale_date = date(2023, 6, 10)
+        sale.save()
+        data = export_backup()
+        Sale.objects.all().delete()
+
+        restore_backup(data)
+        assert Sale.objects.get().sale_date == date(2023, 6, 10)
+
+    def test_restore_backup_without_sale_date_falls_back_to_created_at(self):
+        from app import Sale, export_backup, restore_backup
+
+        original = self._make_sale()
+        data = export_backup()
+        data["sales"][0].pop("sale_date")
+        Sale.objects.all().delete()
+
+        restore_backup(data)
+        assert Sale.objects.get().sale_date == original.created_at.date()
+
     def test_restore_handles_null_grant_dates(self):
         from app import Lot, export_backup, restore_backup
 

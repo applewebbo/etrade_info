@@ -224,6 +224,30 @@ class TestSellView:
         assert sale.gross_proceeds_usd == Decimal("2000")
         assert sale.tax_usd == Decimal("260")
 
+    def test_post_stores_given_sale_date(self, client):
+        from app import Lot, Sale
+
+        lot = Lot.objects.create(**LOT_DEFAULTS)
+        client.post(
+            "/sell/",
+            {
+                f"qty_{lot.pk}": "10",
+                "sale_price": "200",
+                "eur_usd": "1.1",
+                "sale_date": "2024-03-20",
+            },
+        )
+        assert Sale.objects.first().sale_date == date(2024, 3, 20)
+
+    def test_post_without_sale_date_defaults_to_today(self, client):
+        from django.utils import timezone
+
+        from app import Lot, Sale
+
+        lot = Lot.objects.create(**LOT_DEFAULTS)
+        self._post_sell(client, lot)
+        assert Sale.objects.first().sale_date == timezone.localdate()
+
 
 @pytest.mark.django_db
 class TestSellUndoView:
@@ -478,6 +502,15 @@ class TestSimulateView:
         assert response.status_code == 200
         assert b"Simulatore" in response.content
 
+    def test_get_shows_sale_date_input_defaulting_to_today(self, client, mock_prices):
+        from django.utils import timezone
+
+        from app import Lot
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        response = client.get("/simulate/")
+        assert timezone.localdate().isoformat().encode() in response.content
+
     def test_post_returns_simulation_result(self, client, mock_prices):
         from app import Lot
 
@@ -498,6 +531,100 @@ class TestSimulateView:
             {f"qty_{lot.pk}": "not-a-number", "sale_price": "200"},
         )
         assert response.status_code == 200
+
+    def test_post_without_sale_date_uses_live_rate(self, client, mock_prices):
+        from app import Lot
+
+        lot = Lot.objects.create(**LOT_DEFAULTS)
+        response = client.post(
+            "/simulate/",
+            {f"qty_{lot.pk}": "5", "sale_price": "200"},
+        )
+        assert b'"eur_usd": "1.10000"' in response.content
+
+    def test_post_with_past_sale_date_uses_bdi_historical_rate(
+        self, client, mock_prices, monkeypatch
+    ):
+        import bdi_rates
+        from app import Lot
+
+        monkeypatch.setattr(
+            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("0.90000")
+        )
+        lot = Lot.objects.create(**LOT_DEFAULTS)
+        response = client.post(
+            "/simulate/",
+            {f"qty_{lot.pk}": "5", "sale_price": "200", "sale_date": "2024-01-15"},
+        )
+        assert response.status_code == 200
+        assert b'"eur_usd": "0.90000"' in response.content
+
+    def test_post_with_past_date_and_unavailable_rate_shows_message(
+        self, client, mock_prices, monkeypatch
+    ):
+        import bdi_rates
+        from app import Lot
+
+        monkeypatch.setattr(bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: None)
+        lot = Lot.objects.create(**LOT_DEFAULTS)
+        response = client.post(
+            "/simulate/",
+            {f"qty_{lot.pk}": "5", "sale_price": "200", "sale_date": "2024-01-15"},
+        )
+        assert response.status_code == 200
+        assert b"cambio storico non disponibile" in response.content.lower()
+
+
+@pytest.mark.django_db
+class TestResolveSaleRate:
+    def test_today_uses_live_rate(self, monkeypatch):
+        from django.utils import timezone
+
+        import prices
+        from app import _resolve_sale_rate
+
+        monkeypatch.setattr(prices, "get_eur_usd_rate", lambda: Decimal("1.20000"))
+        assert _resolve_sale_rate(timezone.localdate()) == Decimal("1.20000")
+
+    def test_past_date_uses_bdi_rate(self, monkeypatch):
+        import bdi_rates
+        from app import _resolve_sale_rate
+
+        monkeypatch.setattr(
+            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("0.90000")
+        )
+        assert _resolve_sale_rate(date(2024, 1, 15)) == Decimal("0.90000")
+
+    def test_future_date_uses_live_rate(self, monkeypatch):
+        from django.utils import timezone
+
+        import prices
+        from app import _resolve_sale_rate
+
+        monkeypatch.setattr(prices, "get_eur_usd_rate", lambda: Decimal("1.20000"))
+        future = date(timezone.localdate().year + 1, 1, 1)
+        assert _resolve_sale_rate(future) == Decimal("1.20000")
+
+
+class TestParseSaleDate:
+    def test_valid_iso_string(self):
+        from app import _parse_sale_date
+
+        assert _parse_sale_date("2024-01-15") == date(2024, 1, 15)
+
+    def test_invalid_string_falls_back_to_today(self):
+        from django.utils import timezone
+
+        from app import _parse_sale_date
+
+        assert _parse_sale_date("not-a-date") == timezone.localdate()
+
+    def test_none_falls_back_to_today(self):
+        from django.utils import timezone
+
+        from app import _parse_sale_date
+
+        assert _parse_sale_date(None) == timezone.localdate()
 
 
 @pytest.fixture

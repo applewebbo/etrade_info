@@ -44,7 +44,7 @@
 <div class="sell-action">
   <button type="button"
           hx-post="/sell/"
-          hx-vals='{"sale_price": "{{ sale_price|unlocalize }}", "eur_usd": "{{ eur_usd|unlocalize }}"{% for entry in result.per_lot %}, "qty_{{ entry.lot.pk }}": "{{ entry.qty|unlocalize }}"{% endfor %}}'
+          hx-vals='{"sale_price": "{{ sale_price|unlocalize }}", "eur_usd": "{{ eur_usd|unlocalize }}", "sale_date": "{{ sale_date|date:"Y-m-d" }}"{% for entry in result.per_lot %}, "qty_{{ entry.lot.pk }}": "{{ entry.qty|unlocalize }}"{% endfor %}}'
           hx-target="#sim-result"
           hx-swap="innerHTML"
           hx-confirm="Conferma la vendita di {{ result.per_lot|length }} posizioni a ${{ sale_price|floatformat:2 }}?&#10;Ricavo lordo: ${{ result.gross_proceeds_usd|floatformat:2 }}&#10;Tasse stimate: ${{ result.tax_usd|floatformat:2 }}"
@@ -52,6 +52,8 @@
     Vendi
   </button>
 </div>
+{% elif rate_unavailable %}
+<article><p>Cambio storico non disponibile per questa data.</p></article>
 {% else %}
 <article><p>Seleziona almeno una posizione per vedere il calcolo.</p></article>
 {% endif %}
