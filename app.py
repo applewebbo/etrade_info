@@ -90,6 +90,10 @@ class Sale(models.Model):
         return self.tax_usd / self.eur_usd_rate
 
     @property
+    def net_gain_eur(self):
+        return self.net_gain_usd / self.eur_usd_rate
+
+    @property
     def total_qty(self):
         return sum(sl.qty_sold for sl in self.lots.all())
 
@@ -720,11 +724,25 @@ def tasse_view(request):
 
     data_available = all([price_start, price_end, rate_start, rate_end])
 
+    sales = list(Sale.objects.filter(sale_date__year=year).order_by("sale_date"))
+    sales_totals = (
+        {
+            "qty": sum(s.total_qty for s in sales),
+            "gross_proceeds_eur": sum(s.gross_proceeds_eur for s in sales),
+            "net_gain_eur": sum(s.net_gain_eur for s in sales),
+            "tax_eur": sum(s.tax_eur for s in sales),
+        }
+        if sales
+        else None
+    )
+
     ctx = {
         "year": year,
         "available_years": available_years,
         "has_lots": bool(lots),
         "data_available": data_available,
+        "sales": sales,
+        "sales_totals": sales_totals,
     }
     if data_available and lots:
         ivafe_data = calculate_ivafe(lots, price_start, price_end, rate_start, rate_end, year)

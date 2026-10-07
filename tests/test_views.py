@@ -802,6 +802,67 @@ class TestTasseYearSelector:
         assert b"2025" in response.content
 
 
+SALE_DEFAULTS = dict(
+    sale_price_usd=Decimal("200.00000"),
+    eur_usd_rate=Decimal("1.100000"),
+    gross_proceeds_usd=Decimal("2000.00000"),
+    net_gain_usd=Decimal("1000.00000"),
+    tax_usd=Decimal("260.00000"),
+)
+
+SALE_LOT_DEFAULTS = dict(
+    original_lot_id=1,
+    symbol="AAPL",
+    plan_type="ESPP",
+    date_acquired=date(2020, 1, 1),
+    qty_sold=Decimal("10"),
+    cost_basis=Decimal("100.00000"),
+    tax_status="Long Term",
+    gain_usd=Decimal("1000.00000"),
+)
+
+
+@pytest.mark.django_db
+class TestQuadroVenditeSection:
+    def test_no_sales_shows_empty_message(self, client, mock_ivafe_data):
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"Nessuna vendita" in response.content
+
+    def test_sale_in_selected_year_shows_totals(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2025, 6, 15)})
+        SaleLot.objects.create(sale=sale, **SALE_LOT_DEFAULTS)
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"Nessuna vendita" not in response.content
+        assert b"1818,18" in response.content  # gross proceeds EUR (2000/1.1)
+
+    def test_multiple_sales_sum_totals(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        sale1 = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2025, 3, 1)})
+        SaleLot.objects.create(sale=sale1, **SALE_LOT_DEFAULTS)
+        sale2 = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2025, 9, 1)})
+        SaleLot.objects.create(sale=sale2, **{**SALE_LOT_DEFAULTS, "qty_sold": Decimal("5")})
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"1818,18" in response.content  # net gain EUR total: 2 x (1000/1.1)
+
+    def test_sale_outside_selected_year_is_excluded(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2024, 6, 15)})
+        SaleLot.objects.create(sale=sale, **SALE_LOT_DEFAULTS)
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"Nessuna vendita" in response.content
+
+
 @pytest.mark.django_db
 class TestReleasesView:
     def test_page_renders(self, client):

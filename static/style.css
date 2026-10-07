@@ -681,3 +681,8 @@ tbody tr:nth-child(even) th {
 }
 .tasse-year-form label { white-space: nowrap; margin-bottom: 0; }
 .tasse-year-form select { margin-bottom: 0; width: 100%; }
+.tasse-section + .tasse-section {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--pico-color-slate-200);
+}

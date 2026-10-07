@@ -148,6 +148,64 @@
 {% endif %}
 </section>
 
+<section class="tasse-section">
+<h3 class="tasse-section-title">Quadro vendite {{ year }} — Plusvalenze (Redditi PF, Quadro RT)</h3>
+<p class="ivafe-subtitle">Riepilogo delle vendite AAPL registrate per l'anno {{ year }}, con corrispettivi, plusvalenza netta e imposta al 26% già calcolati da ciascuna vendita.</p>
+
+{% if not sales_totals %}
+<article>
+  <p>Nessuna vendita registrata per l'anno {{ year }}.</p>
+</article>
+{% else %}
+
+<div class="summary-grid ivafe-grid">
+  <div class="summary-card card-portfolio">
+    <small>Corrispettivi totali {{ year }}</small>
+    <strong>€{{ sales_totals.gross_proceeds_eur|floatformat:2 }}</strong>
+    <small>{{ sales|length }} vendit{{ sales|length|pluralize:"a,e" }} · {{ sales_totals.qty|floatformat:"-4" }} azioni</small>
+  </div>
+  <div class="summary-card card-rsu">
+    <small>Plusvalenza netta {{ year }}</small>
+    <strong>€{{ sales_totals.net_gain_eur|floatformat:2 }}</strong>
+  </div>
+  <div class="summary-card card-taxes">
+    <small>Imposta stimata {{ year }} (26%)</small>
+    <strong>€{{ sales_totals.tax_eur|floatformat:2 }}</strong>
+  </div>
+</div>
+
+<div class="table-card">
+<figure>
+<table>
+  <thead>
+    <tr>
+      <th>Data vendita</th>
+      <th>Azioni</th>
+      <th>Corrispettivo (€)</th>
+      <th>Plusvalenza (€)</th>
+      <th>Imposta 26% (€)</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for sale in sales %}
+  <tr>
+    <td>{{ sale.sale_date|date:"d/m/Y" }}</td>
+    <td>{{ sale.total_qty|floatformat:"-4" }}</td>
+    <td>€{{ sale.gross_proceeds_eur|floatformat:2 }}</td>
+    <td>€{{ sale.net_gain_eur|floatformat:2 }}</td>
+    <td>€{{ sale.tax_eur|floatformat:2 }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</figure>
+</div>
+
+<p class="ivafe-disclaimer">⚠ Importi convertiti in euro al cambio storico Banca d'Italia della rispettiva data di vendita. Riportare i dati nel Quadro RT seguendo le istruzioni del modello Redditi PF per le plusvalenze da cessione di strumenti finanziari esteri.</p>
+
+{% endif %}
+</section>
+
 <div class="ivafe-legal">
   <p><strong>AVVERTENZA LEGALE — LIMITAZIONE DI RESPONSABILITÀ</strong></p>
   <p>
