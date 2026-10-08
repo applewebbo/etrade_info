@@ -51,4 +51,4 @@ Static assets are fully bundled (no CDN). Templates use **Pico CSS** + **HTMX** 
 
 ## Issue tracking
 
-Issues are on Codeberg. Use `just issue-*` commands (backed by `./bin/codeberg`) or the `/codeberg` skill.
+Issues are on GitHub. Use `just issue-*` commands (backed by `gh issue`) or `gh issue` directly.

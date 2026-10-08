@@ -1,5 +1,7 @@
 set dotenv-load
 
+github_repo := "applewebbo/etrade_info"
+
 default:
     @just --list
 
@@ -87,48 +89,48 @@ lint:
 
 
 ##########################################################################
-# Codeberg
+# GitHub
 ##########################################################################
 
 # List issues (state: open|closed|all)
-[group('codeberg')]
+[group('github')]
 issues state="open":
-    ./bin/codeberg list {{ state }}
+    gh issue list -R {{ github_repo }} --state {{ state }}
 
 # Show issue details
-[group('codeberg')]
+[group('github')]
 issue number:
-    ./bin/codeberg show {{ number }}
+    gh issue view {{ number }} -R {{ github_repo }} --comments
 
 # Add comment to issue
-[group('codeberg')]
+[group('github')]
 issue-comment number text:
-    ./bin/codeberg comment {{ number }} "{{ text }}"
-
-# Mark a checkbox step as done in issue body
-[group('codeberg')]
-issue-check number step:
-    ./bin/codeberg check {{ number }} "{{ step }}"
+    gh issue comment {{ number }} -R {{ github_repo }} --body {{ quote(text) }}
 
 # Close issue
-[group('codeberg')]
+[group('github')]
 issue-close number:
-    ./bin/codeberg close {{ number }}
+    gh issue close {{ number }} -R {{ github_repo }}
 
 # Reopen issue
-[group('codeberg')]
+[group('github')]
 issue-reopen number:
-    ./bin/codeberg reopen {{ number }}
+    gh issue reopen {{ number }} -R {{ github_repo }}
 
-# Add labels to issue (space-separated)
-[group('codeberg')]
+# Add labels to issue (space-separated, labels must already exist)
+[group('github')]
 issue-label number *labels:
-    ./bin/codeberg label {{ number }} {{ labels }}
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for label in {{ labels }}; do
+        gh issue edit {{ number }} -R {{ github_repo }} --add-label "$label"
+        echo "✓ Label '$label' added to issue #{{ number }}"
+    done
 
 # Create new issue
-[group('codeberg')]
+[group('github')]
 issue-create title body="":
-    ./bin/codeberg create "{{ title }}" "{{ body }}"
+    gh issue create -R {{ github_repo }} --title {{ quote(title) }} --body {{ quote(body) }}
 
 
 ##########################################################################

@@ -911,7 +911,7 @@ class TestReleasesView:
     def test_footer_links_to_source_repository(self, client):
         response = client.get("/")
         content = response.content.decode()
-        assert "codeberg.org/webbografico/stock_info" in content
+        assert "github.com/applewebbo/etrade_info" in content
 
     def test_footer_shows_copyright(self, client):
         response = client.get("/")
