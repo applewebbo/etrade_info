@@ -8,9 +8,10 @@ gains tax, and IVAFE.
 
 ## Download
 
-Grab the latest packaged app from the
-[Releases page](https://github.com/applewebbo/etrade_info/releases) —
-download `Etrade Portfolio.zip` from the most recent release.
+[**Download the latest version**](https://github.com/applewebbo/etrade_info/releases/latest/download/Etrade%20Portfolio.zip)
+— this link always points to the newest release's zip, no need to
+browse releases or branches. (See the [Releases page](https://github.com/applewebbo/etrade_info/releases)
+for release notes and older versions.)
 
 ## Requirements
 

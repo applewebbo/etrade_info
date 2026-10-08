@@ -132,6 +132,69 @@ issue-label number *labels:
 issue-create title body="":
     gh issue create -R {{ github_repo }} --title {{ quote(title) }} --body {{ quote(body) }}
 
+# List all releases
+[group('github')]
+release-list:
+    gh release list -R {{ github_repo }}
+
+# Show release details
+[group('github')]
+release-show tag:
+    gh release view "{{ tag }}" -R {{ github_repo }}
+
+# Build the dist zip, push main+tag, then cut the release with the zip attached
+[group('github')]
+release-create tag previous_tag="" notes_file="" draft="false" prerelease="false": dist
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    git push origin main
+
+    if git rev-parse "{{ tag }}" >/dev/null 2>&1; then
+        echo "tag {{ tag }} already exists"
+    else
+        git tag "{{ tag }}"
+    fi
+    git push origin "refs/tags/{{ tag }}"
+
+    if [ -n "{{ notes_file }}" ]; then
+        NOTES_FILE="{{ notes_file }}"
+    else
+        NOTES_FILE=$(mktemp /tmp/release-notes-XXXXXX.md)
+        if [ -n "{{ previous_tag }}" ]; then
+            PREV_TAG="{{ previous_tag }}"
+        else
+            PREV_TAG=$(git tag --sort=-version:refname | grep -v "{{ tag }}" | head -1)
+        fi
+        COMMITS=$(git log ${PREV_TAG}..{{ tag }} --pretty=format:"- %s" --reverse 2>/dev/null || echo "- Initial release")
+        {
+            echo "## What's New in {{ tag }}"
+            echo ""
+            for section in "feat:### ✨ Features" "fix:### 🐛 Bug Fixes" \
+                           "chore|build|ci:### 🛠️ Maintenance" "test:### 🚨 Tests" \
+                           "docs:### 📚 Documentation" "refactor|style:### ♻️ Refactoring"; do
+                pattern=${section%%:*}
+                heading=${section#*:}
+                body=$(echo "$COMMITS" | grep -E "^- (${pattern})" || true)
+                if [ -n "$body" ]; then
+                    printf '%s\n%s\n\n' "$heading" "$body"
+                fi
+            done
+            echo "### 📖 Full Changelog"
+            echo "https://github.com/{{ github_repo }}/compare/${PREV_TAG}...{{ tag }}"
+        } > "$NOTES_FILE"
+    fi
+
+    RELEASE_FLAGS=(--title "{{ tag }}" --notes-file "$NOTES_FILE")
+    if [ "{{ draft }}" = "true" ]; then
+        RELEASE_FLAGS+=(--draft)
+    fi
+    if [ "{{ prerelease }}" = "true" ]; then
+        RELEASE_FLAGS+=(--prerelease)
+    fi
+
+    gh release create "{{ tag }}" -R {{ github_repo }} "dist/Etrade Portfolio.zip" "${RELEASE_FLAGS[@]}"
+
 
 ##########################################################################
 # Distribution
