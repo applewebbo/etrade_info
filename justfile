@@ -209,10 +209,12 @@ dist:
     rm -rf "dist/Etrade Portfolio" "dist/EtradePortfolio.zip"
     mkdir -p "dist/Etrade Portfolio"
     cp start.command uninstall.command \
-       app.py prices.py tax_engine.py xlsx_parser.py \
-       bdi_rates.py ivafe_engine.py \
        pyproject.toml uv.lock ISTRUZIONI.txt \
        "dist/Etrade Portfolio/"
+    for f in *.py; do
+        [ "$f" = "conftest.py" ] && continue
+        cp "$f" "dist/Etrade Portfolio/"
+    done
     cp -r templates static migrations "dist/Etrade Portfolio/"
     cd "dist"
     zip -r "EtradePortfolio.zip" "Etrade Portfolio" -x "*/__pycache__/*" -x "*/.DS_Store"
