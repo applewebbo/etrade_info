@@ -1,22 +1,25 @@
 {% if prices_unavailable %}
-<p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
+<div role="alert" class="alert alert-error alert-soft mb-4">
+  <span>Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</span>
+</div>
 {% elif prices_stale %}
-<p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
+<div role="alert" class="alert alert-warning alert-soft mb-4">
+  <span>Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</span>
+</div>
 {% endif %}
 {% if not prices_unavailable %}
-<div class="summary-grid">
-  <div class="summary-card card-aapl">
-    <small>AAPL live</small>
-    <strong class="{% if price_direction == 'up' %}price-up{% elif price_direction == 'down' %}price-down{% endif %}">
-      €{{ price_eur|floatformat:2 }}{% if price_direction == 'up' %}<span class="price-arrow">▲</span>{% elif price_direction == 'down' %}<span class="price-arrow">▼</span>{% endif %}
-    </strong>
-    <small>${{ price_usd|floatformat:2 }}</small>
-    {% if last_updated %}<span class="last-updated">aggiornato alle {{ last_updated }}</span>{% endif %}
+<div class="flex flex-wrap justify-end gap-6 mb-4">
+  <div class="kpi-card card bg-base-100 border border-base-300 px-4 py-2">
+    <div class="text-[11px] font-medium uppercase tracking-wide text-base-content/50">AAPL live</div>
+    <div class="text-xl font-bold text-blue-600 leading-tight">
+      €{{ price_eur|floatformat:2 }}{% if price_direction == 'up' %}<span class="text-success ml-2">▲</span>{% elif price_direction == 'down' %}<span class="text-error ml-2">▼</span>{% endif %}
+    </div>
+    <div class="text-xs text-base-content/40">${{ price_usd|floatformat:2 }}{% if last_updated %} — aggiornato alle {{ last_updated }}{% endif %}</div>
   </div>
-  <div class="summary-card card-fx">
-    <small>Cambio EUR/USD</small>
-    <strong>{{ eur_usd|floatformat:4 }}</strong>
-    {% if last_updated %}<span class="last-updated">aggiornato alle {{ last_updated }}</span>{% endif %}
+  <div class="kpi-card card bg-base-100 border border-base-300 px-4 py-2">
+    <div class="text-[11px] font-medium uppercase tracking-wide text-base-content/50">Cambio EUR/USD</div>
+    <div class="text-xl font-bold text-cyan-600 leading-tight">{{ eur_usd|floatformat:4 }}</div>
+    <div class="text-xs text-base-content/40">{% if last_updated %}aggiornato alle {{ last_updated }}{% endif %}</div>
   </div>
 </div>
 {% endif %}

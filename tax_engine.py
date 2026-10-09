@@ -26,6 +26,9 @@ def calculate_sale_result(
     total_gross_usd = Decimal("0")
     total_cost_usd = Decimal("0")
 
+    def to_eur(usd: Decimal) -> Decimal:
+        return usd / eur_usd_rate
+
     for lot, qty in lots_with_qty:
         if qty == 0:
             continue
@@ -37,8 +40,11 @@ def calculate_sale_result(
                 "lot": lot,
                 "qty": qty,
                 "gross_usd": gross,
+                "gross_eur": to_eur(gross),
                 "cost_basis_usd": cost,
+                "cost_basis_eur": to_eur(cost),
                 "gain_usd": gain,
+                "gain_eur": to_eur(gain),
             }
         )
         total_gain_usd += gain
@@ -46,9 +52,6 @@ def calculate_sale_result(
         total_cost_usd += cost
 
     tax_usd = max(Decimal("0"), total_gain_usd) * TAX_RATE
-
-    def to_eur(usd: Decimal) -> Decimal:
-        return usd / eur_usd_rate
 
     return {
         "gross_proceeds_usd": total_gross_usd,

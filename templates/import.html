@@ -2,167 +2,178 @@
 {% block title %}Impostazioni — Etrade Portfolio{% endblock %}
 {% block content %}
 
-<h2>Impostazioni</h2>
+<h2 class="text-2xl font-bold tracking-tight mb-6">Impostazioni</h2>
 
-<section>
-  <article class="settings-card card-portfolio">
-    <h3>Importa</h3>
+<section class="mb-6">
+  <div class="card bg-base-100 border border-base-300">
+    <div class="card-body">
+    <h3 class="card-title">Importa</h3>
     {% if count %}
-    <p class="import-status">
-      <span class="import-status-dot"></span>
+    <div class="flex items-center gap-2 text-sm">
+      <span class="status status-success"></span>
       <strong>{{ count }} posizioni</strong> attualmente caricate
-    </p>
+    </div>
     {% endif %}
-    <div class="import-section-grid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
 
-      <div class="import-section-col">
-        <h4 class="import-section-title">Portfolio (Sellable)</h4>
-        <form method="post" enctype="multipart/form-data" class="import-compact-form">
+      <div>
+        <h4 class="font-semibold mb-2">Portfolio (Sellable)</h4>
+        <form method="post" enctype="multipart/form-data" class="flex flex-col gap-3">
           {% csrf_token %}
-          <input type="file" name="xlsx" accept=".xlsx" required />
+          <input type="file" name="xlsx" accept=".xlsx" required class="file-input file-input-sm w-full" />
 
-          <div class="mode-field" x-data="{ mode: 'overwrite' }">
-            <div class="mode-options">
-              <input type="radio" id="sellable-mode-overwrite" name="mode" value="overwrite" x-model="mode" checked />
-              <label for="sellable-mode-overwrite">Sovrascrivi</label>
-              <input type="radio" id="sellable-mode-incremental" name="mode" value="incremental" x-model="mode" />
-              <label for="sellable-mode-incremental">Aggiungi</label>
-              <input type="radio" id="sellable-mode-update-grant" name="mode" value="update_grant" x-model="mode" />
-              <label for="sellable-mode-update-grant">Assegnazioni</label>
+          <div x-data="{ mode: 'overwrite' }">
+            <div class="flex flex-wrap gap-4">
+              <label class="flex items-center gap-1.5 text-sm">
+                <input type="radio" id="sellable-mode-overwrite" name="mode" value="overwrite" x-model="mode" checked class="radio radio-sm" />
+                Sovrascrivi
+              </label>
+              <label class="flex items-center gap-1.5 text-sm">
+                <input type="radio" id="sellable-mode-incremental" name="mode" value="incremental" x-model="mode" class="radio radio-sm" />
+                Aggiungi
+              </label>
+              <label class="flex items-center gap-1.5 text-sm">
+                <input type="radio" id="sellable-mode-update-grant" name="mode" value="update_grant" x-model="mode" class="radio radio-sm" />
+                Assegnazioni
+              </label>
             </div>
-            <p class="mode-hint">
+            <p class="text-xs text-base-content/60 mt-1">
               <span x-show="mode === 'overwrite'">Elimina tutte le posizioni esistenti e importa il file.</span>
               <span x-show="mode === 'incremental'">Aggiunge solo le posizioni non ancora presenti.</span>
               <span x-show="mode === 'update_grant'">Compila la data di assegnazione sulle posizioni esistenti e vendute, senza toccare altri dati.</span>
             </p>
           </div>
 
-          <div class="form-actions">
-            <button type="submit">Importa</button>
+          <div class="flex justify-end">
+            <button type="submit" class="btn btn-primary btn-sm">Importa</button>
           </div>
         </form>
       </div>
 
-      <div class="import-section-col">
-        <h4 class="import-section-title">Vendite (Gains &amp; Losses)</h4>
-        <form method="post" enctype="multipart/form-data" class="import-compact-form">
+      <div>
+        <h4 class="font-semibold mb-2">Vendite (Gains &amp; Losses)</h4>
+        <form method="post" enctype="multipart/form-data" class="flex flex-col gap-3">
           {% csrf_token %}
-          <input type="file" name="gl_xlsx" accept=".xlsx" required />
+          <input type="file" name="gl_xlsx" accept=".xlsx" required class="file-input file-input-sm w-full" />
 
-          <div class="mode-field" x-data="{ mode: 'overwrite' }">
-            <div class="mode-options">
-              <input type="radio" id="gl-mode-overwrite" name="gl_mode" value="overwrite" x-model="mode" checked />
-              <label for="gl-mode-overwrite">Sovrascrivi</label>
-              <input type="radio" id="gl-mode-incremental" name="gl_mode" value="incremental" x-model="mode" />
-              <label for="gl-mode-incremental">Aggiungi</label>
+          <div x-data="{ mode: 'overwrite' }">
+            <div class="flex flex-wrap gap-4">
+              <label class="flex items-center gap-1.5 text-sm">
+                <input type="radio" id="gl-mode-overwrite" name="gl_mode" value="overwrite" x-model="mode" checked class="radio radio-sm" />
+                Sovrascrivi
+              </label>
+              <label class="flex items-center gap-1.5 text-sm">
+                <input type="radio" id="gl-mode-incremental" name="gl_mode" value="incremental" x-model="mode" class="radio radio-sm" />
+                Aggiungi
+              </label>
             </div>
-            <p class="mode-hint">
+            <p class="text-xs text-base-content/60 mt-1">
               <span x-show="mode === 'overwrite'">Sostituisce le vendite già importate per l'anno selezionato.</span>
               <span x-show="mode === 'incremental'">Aggiunge solo gli ordini non ancora registrati.</span>
             </p>
           </div>
 
-          <label class="import-year-label">
+          <label class="flex items-center gap-2 text-sm">
             Anno fiscale
-            <select name="year" class="import-year-select">
+            <select name="year" class="select select-sm w-auto">
               {% for y in gl_years %}
               <option value="{{ y }}" {% if y == gl_default_year %}selected{% endif %}>{{ y }}</option>
               {% endfor %}
             </select>
           </label>
 
-          <div class="form-actions">
-            <button type="submit">Importa</button>
+          <div class="flex justify-end">
+            <button type="submit" class="btn btn-primary btn-sm">Importa</button>
           </div>
         </form>
       </div>
 
     </div>
-  </article>
+    </div>
+  </div>
 </section>
 
-<section>
-  <article class="settings-card card-export">
-    <h3>Backup completo</h3>
-    <div class="export-row">
-      <div class="export-info">
+<section class="mb-6">
+  <div class="card bg-base-100 border border-base-300">
+    <div class="card-body">
+    <h3 class="card-title">Backup completo</h3>
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex-1 min-w-0">
         <strong>Scarica un backup completo (JSON)</strong>
-        <p>Genera un unico file di backup con l'intero portfolio e lo storico delle vendite. Usalo per conservare o trasferire i tuoi dati.</p>
+        <p class="text-sm text-base-content/60">Genera un unico file di backup con l'intero portfolio e lo storico delle vendite. Usalo per conservare o trasferire i tuoi dati.</p>
       </div>
-      <a href="/export/" role="button">Esporta backup</a>
+      <a href="/export/" class="btn btn-primary btn-sm shrink-0">Esporta backup</a>
     </div>
-    <hr />
-    <div class="export-row" x-data="{ open: false }">
-      <div class="export-info">
+    <div class="divider"></div>
+    <div class="flex items-center justify-between gap-4" x-data="{ open: false }">
+      <div class="flex-1 min-w-0">
         <strong>Ripristina da un backup</strong>
-        <p>Carica un file di backup JSON. Portfolio e vendite attuali verranno <strong>sostituiti</strong> con il contenuto del file.</p>
+        <p class="text-sm text-base-content/60">Carica un file di backup JSON. Portfolio e vendite attuali verranno <strong>sostituiti</strong> con il contenuto del file.</p>
       </div>
-      <button type="button" class="secondary" @click="open = true">Ripristina backup</button>
+      <button type="button" class="btn btn-neutral btn-sm shrink-0" @click="open = true">Ripristina backup</button>
 
       <!-- Modale ripristino -->
-      <div class="modal-backdrop" x-show="open" x-transition.opacity @click.self="open = false" x-cloak>
+      <div class="modal" :class="{ 'modal-open': open }" x-show="open" x-cloak @click.self="open = false">
         <div class="modal-box" @click.stop>
-          <header class="modal-header">
-            <strong>Ripristina backup</strong>
-            <button class="modal-close secondary outline" @click="open = false" aria-label="Chiudi">✕</button>
-          </header>
-          <p>Carica un file di backup JSON. Portfolio e vendite attuali verranno <strong>sostituiti</strong> con il contenuto del file. L'operazione non può essere annullata.</p>
+          <div class="flex items-center justify-between mb-4">
+            <strong class="text-lg">Ripristina backup</strong>
+            <button class="btn btn-sm btn-circle btn-ghost" @click="open = false" aria-label="Chiudi">✕</button>
+          </div>
+          <p class="mb-4">Carica un file di backup JSON. Portfolio e vendite attuali verranno <strong>sostituiti</strong> con il contenuto del file. L'operazione non può essere annullata.</p>
           <form method="post" action="/restore/" enctype="multipart/form-data">
             {% csrf_token %}
-            <label class="file-drop" x-data="{ name: '' }">
-              <input type="file" name="backup" accept=".json" required
-                     x-on:change="name = $event.target.files[0]?.name ?? ''"
-                     class="file-drop-input" />
-              <span class="file-drop-icon">♻️</span>
-              <span class="file-drop-hint" x-text="name || 'backup.json'"></span>
-              <span class="file-drop-sub">Clicca per selezionare il file</span>
-            </label>
-            <div class="form-actions">
-              <button type="submit">Ripristina</button>
+            <input type="file" name="backup" accept=".json" required class="file-input file-input-sm w-full" />
+            <div class="mt-4 flex justify-end">
+              <button type="submit" class="btn btn-primary btn-sm">Ripristina</button>
             </div>
           </form>
         </div>
       </div>
     </div>
-  </article>
+    </div>
+  </div>
 </section>
 
 {% if sales %}
-<section>
-  <article class="settings-card card-sales">
-    <h3>Storico vendite</h3>
+<section class="mb-6">
+  <div class="card bg-base-100 border border-base-300">
+    <div class="card-body">
+    <h3 class="card-title">Storico vendite</h3>
+    <div class="flex flex-col gap-2">
     {% for sale in sales %}
-    <div class="sale-history-item">
-      <div class="sale-history-header">
-        <span><strong>{{ sale.created_at|date:"d/m/Y H:i" }}</strong> — ${{ sale.sale_price_usd|floatformat:2 }}/azione</span>
-        <span class="sale-history-totals">Ricavo: ${{ sale.gross_proceeds_usd|floatformat:2 }} · Tasse: ${{ sale.tax_usd|floatformat:2 }}</span>
-      </div>
+    <div class="flex items-center justify-between text-sm border-b border-base-300 pb-2 last:border-0">
+      <span><strong>{{ sale.sale_date|date:"d/m/Y" }}</strong> — ${{ sale.sale_price_usd|floatformat:2 }}/azione</span>
+      <span class="text-base-content/60">Ricavo: ${{ sale.gross_proceeds_usd|floatformat:2 }} · Tasse: ${{ sale.tax_usd|floatformat:2 }}</span>
     </div>
     {% endfor %}
-    <div class="form-actions">
-      <button class="danger outline"
+    </div>
+    <div class="flex justify-end mt-2">
+      <button class="btn btn-error btn-outline btn-sm"
               hx-post="/sell/undo/"
               hx-confirm="Annullare l'ultima vendita? Le posizioni vendute verranno ripristinate nel portfolio.">
         Annulla ultima vendita
       </button>
     </div>
-  </article>
+    </div>
+  </div>
 </section>
 {% endif %}
 
 <section>
-  <article class="settings-card card-danger">
-    <h3>Danger Zone</h3>
-    <div class="danger-row">
-      <div class="danger-info">
+  <div class="card bg-base-100 border border-base-300">
+    <div class="card-body">
+    <h3 class="card-title">Danger Zone</h3>
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex-1 min-w-0">
         <strong>Cancella tutte le posizioni</strong>
-        <p>Elimina definitivamente tutti i dati importati dal database. L'operazione non può essere annullata e non è possibile recuperare i dati. Sarà necessario eseguire un nuovo import per ripristinare il portfolio.</p>
+        <p class="text-sm text-base-content/60">Elimina definitivamente tutti i dati importati dal database. L'operazione non può essere annullata e non è possibile recuperare i dati. Sarà necessario eseguire un nuovo import per ripristinare il portfolio.</p>
       </div>
-      <button class="danger"
+      <button class="btn btn-error btn-sm shrink-0"
               hx-post="/reset/"
               hx-confirm="Sei sicuro? Tutte le posizioni verranno eliminate definitivamente e non sarà possibile recuperarle.">Cancella tutto</button>
     </div>
-  </article>
+    </div>
+  </div>
 </section>
 
 {% endblock %}

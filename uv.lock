@@ -482,6 +482,18 @@ wheels = [
 
 [[package]]
 dependencies = [
+  { name = "click" }
+]
+name = "django-click"
+sdist = { url = "https://files.pythonhosted.org/packages/fc/e9/80f860c3f2bb9bdcc58de6b9578bbc6b4a57bedefdc97211e736fb960380/django_click-2.5.0.tar.gz", hash = "sha256:60d346a04d0db991d0bb31754c0dcad282643aa26a4701ca5ff5df742a7473f8", size = 7251, upload-time = "2026-01-10T13:19:37.958Z" }
+source = { registry = "https://pypi.org/simple" }
+version = "2.5.0"
+wheels = [
+  { url = "https://files.pythonhosted.org/packages/27/43/a8eedd594b0f1d5e736ad5afd48ff4431566d2760b79115af40d8b4e950a/django_click-2.5.0-py3-none-any.whl", hash = "sha256:6bcb71d0bac47f67b91d9ee1972d881d72b5bf20cd2a45a57265cdfac49b88aa", size = 7887, upload-time = "2026-01-10T13:19:37.13Z" }
+]
+
+[[package]]
+dependencies = [
   { name = "django" },
   { name = "pydantic" }
 ]
@@ -491,6 +503,21 @@ source = { registry = "https://pypi.org/simple" }
 version = "1.7.1"
 wheels = [
   { url = "https://files.pythonhosted.org/packages/a8/05/7bf91a79ac69632b15b878ad658371dcae58a4e2545da3709cfc55916da3/django_ninja-1.7.1-py3-none-any.whl", hash = "sha256:61137e9fbb97ca15a92cdbfdcf9f6a738464b328c6cb11090faf17042035ec69", size = 2376240, upload-time = "2026-09-19T05:35:54.89Z" }
+]
+
+[[package]]
+dependencies = [
+  { name = "click" },
+  { name = "django" },
+  { name = "django-click" },
+  { name = "semver" }
+]
+name = "django-tailwind-cli"
+sdist = { url = "https://files.pythonhosted.org/packages/b8/33/31713a0ffcdf9ebda53787bb5da44d8e741b80a200ccc55ee7f193221640/django_tailwind_cli-4.8.1.tar.gz", hash = "sha256:25f6362d64c19dd363d6a720eaf8cbfc1b05699190e9f73fb7c378138bc7675b", size = 165198, upload-time = "2026-09-18T12:49:32.667Z" }
+source = { registry = "https://pypi.org/simple" }
+version = "4.8.1"
+wheels = [
+  { url = "https://files.pythonhosted.org/packages/a2/61/f8317c8dcdc7f25741c7dfd81d1f376f4f29d587ae1d5cb97980fc4946cb/django_tailwind_cli-4.8.1-py3-none-any.whl", hash = "sha256:804268c985729582c4e633b176178b5aad104bcc1507fcaac8e6002f031b93ac", size = 50588, upload-time = "2026-09-18T12:49:31.016Z" }
 ]
 
 [[package]]
@@ -504,6 +531,7 @@ wheels = [
 
 [[package]]
 dependencies = [
+  { name = "django-tailwind-cli" },
   { name = "nanodjango" },
   { name = "openpyxl" },
   { name = "pandas" },
@@ -524,6 +552,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+  { name = "django-tailwind-cli" },
   { name = "nanodjango" },
   { name = "openpyxl" },
   { name = "pandas" },
@@ -1336,6 +1365,15 @@ source = { registry = "https://pypi.org/simple" }
 version = "2.34.2"
 wheels = [
   { url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl", hash = "sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0", size = 73075, upload-time = "2026-05-14T19:25:26.443Z" }
+]
+
+[[package]]
+name = "semver"
+sdist = { url = "https://files.pythonhosted.org/packages/92/f5/e1dfe8e1d91c54ce212fd93916eb01fd1c590f413be0a0978c39a97aa1bb/semver-3.1.0.tar.gz", hash = "sha256:14bc073439513d7773662a338f4db9829cf16c12b74b9568e2d2689975fbd7fc", size = 304162, upload-time = "2026-09-12T18:38:14.045Z" }
+source = { registry = "https://pypi.org/simple" }
+version = "3.1.0"
+wheels = [
+  { url = "https://files.pythonhosted.org/packages/be/02/bce7a1d70e9d0f6ea8623c16386138c251b5855af6cd3a11433d3fba4e66/semver-3.1.0-py3-none-any.whl", hash = "sha256:6e4998f8b4762acdfea85f9bfd5b4032e0bb50038dc04bf82011b42d5d1145c5", size = 18783, upload-time = "2026-09-12T18:38:12.457Z" }
 ]
 
 [[package]]

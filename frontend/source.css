@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: corporate --default;
+}
+@plugin "daisyui/theme" {
+  name: "corporate";
+  --radius-box: .5rem;
+}
+
+@source "../templates";
+
+body {
+  @apply bg-base-200;
+}

@@ -1,23 +1,25 @@
-<tr id="lot-row-{{ lot.pk }}">
-  <td>{{ lot.date_acquired|date:"d/m/y" }}</td>
-  <td>{{ lot.grant_date|date:"d/m/y"|default:"—" }}</td>
-  <td>${{ lot.cost_basis|floatformat:4 }}</td>
-  <td>{{ lot.sellable_qty|floatformat:"-4" }}</td>
-  <td>
-    {% if lot.tax_status == "Long Term" %}
-      <span class="badge-long">Long</span>
+<tr id="lot-row-{{ lot.pk }}" class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <td class="text-center">{{ lot.date_acquired|date:"d/m/y" }}</td>
+  <td class="text-center">{{ lot.grant_date|date:"d/m/y"|default:"—" }}</td>
+  <td class="text-right">${{ lot.cost_basis|floatformat:4 }}</td>
+  <td class="text-right">{{ lot.sellable_qty|floatformat:"-4" }}</td>
+  <td class="text-center">
+    {% if lot.plan_type == "RSU" %}
+      <span class="text-base-content/40">n/d</span>
+    {% elif lot.period_label == "Long Term" %}
+      <span class="badge badge-sm bg-emerald-100 text-emerald-700 border-0">+3y</span>
     {% else %}
-      <span class="badge-short">Short</span>
+      <span class="badge badge-sm bg-orange-100 text-orange-700 border-0">-3y</span>
     {% endif %}
   </td>
-  <td x-data="{ qty: 0, max: {{ lot.sellable_qty|floatformat:'4u' }}, set(v){ this.qty=v; this.$nextTick(()=>this.$refs.q.dispatchEvent(new Event('change',{bubbles:true}))) } }">
-    <div class="qty-controls">
-      <input x-ref="q" type="number" name="qty_{{ lot.pk }}"
-             x-model.number="qty" min="0" :max="max" step="0.001"
-             class="qty-input" />
-      <button type="button" class="qty-btn" @click="set(Math.max(qty-1,0))">-1</button>
-      <button type="button" class="qty-btn" @click="set(Math.min(qty+1,max))">+1</button>
-      <button type="button" class="qty-btn" @click="set(max)">Tutte</button>
+  <td class="text-center" x-data="{ qty: 0, max: {{ lot.sellable_qty|floatformat:'4u' }}, set(v){ this.qty=v; this.$nextTick(()=>this.$refs.q.dispatchEvent(new Event('change',{bubbles:true}))) } }">
+    <div class="join">
+      <input x-ref="q" type="text" inputmode="decimal" name="qty_{{ lot.pk }}"
+             x-model.number="qty"
+             class="input input-sm join-item w-16 text-right" />
+      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}bg-emerald-50 border-emerald-500 text-emerald-700{% else %}bg-purple-50 border-purple-500 text-purple-700{% endif %}" @click="set(Math.max(qty-1,0))">-1</button>
+      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}bg-emerald-50 border-emerald-500 text-emerald-700{% else %}bg-purple-50 border-purple-500 text-purple-700{% endif %}" @click="set(Math.min(qty+1,max))">+1</button>
+      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}bg-emerald-50 border-emerald-500 text-emerald-700{% else %}bg-purple-50 border-purple-500 text-purple-700{% endif %}" @click="set(max)">Max</button>
     </div>
   </td>
 </tr>

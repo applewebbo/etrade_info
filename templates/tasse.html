@@ -2,12 +2,12 @@
 {% block title %}Tasse {{ year }} — Etrade Portfolio{% endblock %}
 {% block content %}
 
-<div class="tasse-header">
-  <h2>Tasse {{ year }}</h2>
+<div class="flex items-baseline justify-between flex-wrap gap-4 mb-6">
+  <h2 class="text-2xl font-bold tracking-tight">Tasse {{ year }}</h2>
   {% if available_years|length > 1 %}
-  <form method="get" class="tasse-year-form">
-    <label for="year-select">Anno di riferimento</label>
-    <select id="year-select" name="year" onchange="this.form.submit()">
+  <form method="get" class="flex items-center gap-2">
+    <label for="year-select" class="text-sm">Anno di riferimento</label>
+    <select id="year-select" name="year" onchange="this.form.submit()" class="select select-sm w-auto">
       {% for y in available_years %}
       <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
       {% endfor %}
@@ -17,126 +17,132 @@
 </div>
 
 {% if is_in_progress_year %}
-<p class="ivafe-disclaimer tasse-provisional-banner">⚠ L'anno {{ year }} è ancora in corso: questi sono dati provvisori, una stima di quanto dovuto se non vengono acquistate o vendute altre azioni prima della fine dell'anno. I valori finali potranno cambiare.</p>
+<div role="alert" class="alert alert-warning alert-soft mb-6">
+  <span>⚠ L'anno {{ year }} è ancora in corso: questi sono dati provvisori, una stima di quanto dovuto se non vengono acquistate o vendute altre azioni prima della fine dell'anno. I valori finali potranno cambiare.</span>
+</div>
 {% endif %}
 
-<section class="tasse-section">
-<h3 class="tasse-section-title">IVAFE {{ year }}</h3>
-<p class="ivafe-subtitle">Imposta sul Valore delle Attività Finanziarie detenute all'Estero — aliquota 2‰ proporzionale ai giorni di detenzione.</p>
+<section class="mb-10">
+<h3 class="text-xl font-bold tracking-tight mb-1">IVAFE {{ year }}</h3>
+<p class="text-sm text-base-content/60 mb-4">Imposta sul Valore delle Attività Finanziarie detenute all'Estero — aliquota 2‰ proporzionale ai giorni di detenzione.</p>
 
 {% if not has_lots %}
-<article>
-  <p>Nessun lotto presente nel database. Importa il file XLSX dalla pagina <a href="/import/">Impostazioni</a>.</p>
-</article>
+<div role="alert" class="alert alert-soft">
+  <span>Nessun lotto presente nel database. Importa il file XLSX dalla pagina <a href="/import/" class="link">Impostazioni</a>.</span>
+</div>
 
 {% elif not data_available %}
-<article>
-  <p>Impossibile recuperare i dati storici necessari al calcolo (prezzi AAPL o tassi di cambio Banca d'Italia non disponibili). Riprova più tardi.</p>
-</article>
+<div role="alert" class="alert alert-soft">
+  <span>Impossibile recuperare i dati storici necessari al calcolo (prezzi AAPL o tassi di cambio Banca d'Italia non disponibili). Riprova più tardi.</span>
+</div>
 
 {% else %}
 
 <!-- Tre card principali -->
-<div class="summary-grid ivafe-grid">
-  <div class="summary-card card-portfolio">
-    <small>Valore al 2 gennaio {{ year }} <span class="ivafe-rate-note">(€/$ {{ rate_start|floatformat:4 }})</span></small>
-    <strong>€{{ total_value_start_eur|floatformat:2 }}</strong>
-    <small>AAPL ${{ price_start|floatformat:2 }}</small>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="stats bg-base-100 border border-base-300">
+    <div class="stat">
+      <div class="stat-title">Valore al 2 gennaio {{ year }} <span class="text-base-content/40">(€/$ {{ rate_start|floatformat:4 }})</span></div>
+      <div class="stat-value text-indigo-600">€{{ total_value_start_eur|floatformat:2 }}</div>
+      <div class="stat-desc">AAPL ${{ price_start|floatformat:2 }}</div>
+    </div>
   </div>
-  <div class="summary-card card-rsu">
-    <small>{% if is_in_progress_year %}Valore odierno (stima 31/12){% else %}Valore al 31 dicembre {{ year }}{% endif %} <span class="ivafe-rate-note">(€/$ {{ rate_end|floatformat:4 }})</span></small>
-    <strong>€{{ total_value_end_eur|floatformat:2 }}</strong>
-    <small>AAPL ${{ price_end|floatformat:2 }}</small>
+  <div class="stats bg-base-100 border border-base-300">
+    <div class="stat">
+      <div class="stat-title">{% if is_in_progress_year %}Valore odierno (stima 31/12){% else %}Valore al 31 dicembre {{ year }}{% endif %} <span class="text-base-content/40">(€/$ {{ rate_end|floatformat:4 }})</span></div>
+      <div class="stat-value text-purple-600">€{{ total_value_end_eur|floatformat:2 }}</div>
+      <div class="stat-desc">AAPL ${{ price_end|floatformat:2 }}</div>
+    </div>
   </div>
-  <div class="summary-card card-taxes">
-    <small>IVAFE stimata {{ year }}</small>
-    <strong>€{{ total_ivafe_eur|floatformat:2 }}</strong>
-    <small>2‰ × valore 31/12 × giorni/365</small>
+  <div class="stats bg-base-100 border border-base-300">
+    <div class="stat">
+      <div class="stat-title">IVAFE stimata {{ year }}</div>
+      <div class="stat-value text-orange-600">€{{ total_ivafe_eur|floatformat:2 }}</div>
+      <div class="stat-desc">2‰ × valore 31/12 × giorni/365</div>
+    </div>
   </div>
 </div>
 
 <!-- Dettaglio per lotto -->
-<div class="table-card">
-<figure>
-<table>
+<div class="card bg-base-100 border border-base-300 overflow-hidden mb-6 max-w-3xl mx-auto">
+<div class="overflow-x-auto">
+<table class="table table-sm">
   <thead>
     <tr>
-      <th>Tipo</th>
-      <th>Data acquisto</th>
-      <th>Azioni</th>
-      <th>Valore 2/1 (€)</th>
-      <th>Valore 31/12 (€)</th>
-      <th>Giorni</th>
-      <th>IVAFE (€)</th>
+      <th class="text-center">Tipo</th>
+      <th class="text-center">Acquisto</th>
+      <th class="text-center">Azioni</th>
+      <th class="text-center">Valore Iniziale</th>
+      <th class="text-center">Valore Finale</th>
+      <th class="text-center">Giorni</th>
     </tr>
   </thead>
   <tbody>
   {% for row in rows %}
-  <tr>
-    <td>{{ row.lot.plan_type }}</td>
-    <td>{{ row.lot.date_acquired|date:"d/m/Y" }}</td>
-    <td>{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
-    <td>{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="ivafe-na">—</span>{% endif %}</td>
-    <td>€{{ row.value_end_eur|floatformat:2 }}</td>
-    <td>{{ row.days_held }}</td>
-    <td>€{{ row.ivafe_eur|floatformat:2 }}</td>
+  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+    <td class="text-center">{{ row.lot.plan_type }}</td>
+    <td class="text-center">{{ row.lot.date_acquired|date:"d/m/Y" }}</td>
+    <td class="text-right">{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
+    <td class="text-right">{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="text-base-content/40">—</span>{% endif %}</td>
+    <td class="text-right">€{{ row.value_end_eur|floatformat:2 }}</td>
+    <td class="text-right">{{ row.days_held }}</td>
   </tr>
   {% endfor %}
   </tbody>
 </table>
-</figure>
+</div>
 </div>
 
 <!-- Guida Quadro RW Modello 730 -->
-<h4 class="ivafe-section-title">Esempio compilazione Quadro RW — Modello 730/{{ year|add:1 }}</h4>
-<p class="ivafe-rw-intro">
+<h4 class="text-lg font-bold tracking-tight mb-1">Esempio compilazione Quadro RW — Modello 730/{{ year|add:1 }}</h4>
+<p class="text-sm text-base-content/60 mb-4">
   Ogni tipologia di detenzione va riportata su una riga del Quadro RW.
   Le azioni detenute per tutto l'anno vengono raggruppate in un'unica riga;
   ogni lotto acquistato durante l'anno va su una riga separata.
 </p>
 
-<div class="table-card">
-<figure>
-<table class="ivafe-rw-table">
+<div class="card bg-base-100 border border-base-300 overflow-hidden mb-6 max-w-3xl mx-auto">
+<div class="overflow-x-auto">
+<table class="table table-sm">
   <thead>
     <tr>
-      <th>Detenzione</th>
-      <th>Valore iniziale (€)</th>
-      <th>Valore finale (€)</th>
-      <th>Giorni</th>
-      <th>IVAFE (€)</th>
+      <th class="text-center">Azioni</th>
+      <th class="text-center">Valore iniziale</th>
+      <th class="text-center">Valore finale</th>
+      <th class="text-center">Giorni</th>
+      <th class="text-center">IVAFE</th>
     </tr>
   </thead>
   <tbody>
   {% if rw_full_year %}
-  <tr class="ivafe-rw-example">
-    <td>{{ rw_full_year.total_qty|floatformat:"-4" }} azioni (365 gg)</td>
-    <td>€{{ rw_full_year.value_start_eur|floatformat:2 }}</td>
-    <td>€{{ rw_full_year.value_end_eur|floatformat:2 }}</td>
-    <td>365</td>
-    <td>€{{ rw_full_year.ivafe_eur|floatformat:2 }}</td>
+  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+    <td class="text-right">{{ rw_full_year.total_qty|floatformat:"-4" }}</td>
+    <td class="text-right">€{{ rw_full_year.value_start_eur|floatformat:2 }}</td>
+    <td class="text-right">€{{ rw_full_year.value_end_eur|floatformat:2 }}</td>
+    <td class="text-right">365</td>
+    <td class="text-right">€{{ rw_full_year.ivafe_eur|floatformat:2 }}</td>
   </tr>
   {% endif %}
   {% for row in rw_partial_rows %}
-  <tr class="ivafe-rw-example">
-    <td>{{ row.lot.sellable_qty|floatformat:"-4" }} azioni ({{ row.days_held }} gg)</td>
-    <td>{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="ivafe-na">N/D</span>{% endif %}</td>
-    <td>€{{ row.value_end_eur|floatformat:2 }}</td>
-    <td>{{ row.days_held }}</td>
-    <td>€{{ row.ivafe_eur|floatformat:2 }}</td>
+  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+    <td class="text-right">{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
+    <td class="text-right">{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="text-base-content/40">N/D</span>{% endif %}</td>
+    <td class="text-right">€{{ row.value_end_eur|floatformat:2 }}</td>
+    <td class="text-right">{{ row.days_held }}</td>
+    <td class="text-right">€{{ row.ivafe_eur|floatformat:2 }}</td>
   </tr>
   {% endfor %}
   {% if not rw_full_year and not rw_partial_rows %}
-  <tr><td colspan="5" class="ivafe-na">Nessun lotto da riportare per l'anno {{ year }}.</td></tr>
+  <tr><td colspan="5" class="text-center text-base-content/40">Nessun lotto da riportare per l'anno {{ year }}.</td></tr>
   {% endif %}
   </tbody>
 </table>
-</figure>
+</div>
 </div>
 
-<div class="ivafe-note">
-  <p><strong>Note Quadro RW:</strong></p>
-  <ul>
+<div class="text-sm text-base-content/70">
+  <p class="font-semibold mb-2">Note Quadro RW:</p>
+  <ul class="list-disc list-inside space-y-1 mb-3">
     <li><strong>Col. 2 – Codice titolo:</strong> 20 = conto deposito di titoli all'estero (il conto E*TRADE)</li>
     <li><strong>Col. 4 – Paese:</strong> 069 = Stati Uniti d'America</li>
     <li><strong>Col. 5 – Criterio valorizzazione:</strong> 1 = valore di mercato (per titoli quotati su mercati regolamentati)</li>
@@ -144,81 +150,87 @@
     <li><strong>Col. 7 – Valore finale:</strong> valore al 31 dicembre {{ year }}, in euro al cambio Banca d'Italia (€/$ {{ rate_end|floatformat:4 }})</li>
     <li><strong>Col. 8 – Giorni:</strong> numero di giorni di detenzione nell'anno</li>
     <li><strong>Col. 20 – IVAFE:</strong> valore finale × 0,2% × giorni / 365</li>
-    <li>Per i lotti acquistati durante l'anno il valore iniziale è calcolato come costo acquisto × quantità × cambio BdI alla data di acquisto (fonte: <a href="https://tassidicambio.bancaditalia.it" target="_blank" rel="noopener">tassidicambio.bancaditalia.it</a>)</li>
+    <li>Per i lotti acquistati durante l'anno il valore iniziale è calcolato come costo acquisto × quantità × cambio BdI alla data di acquisto (fonte: <a href="https://tassidicambio.bancaditalia.it" target="_blank" rel="noopener" class="link">tassidicambio.bancaditalia.it</a>)</li>
   </ul>
-  <p class="ivafe-disclaimer">⚠ La stima è basata sui lotti attualmente presenti nel database. Lotti venduti durante il {{ year }} e rimossi non sono inclusi nel calcolo.</p>
+  <p class="text-xs text-base-content/50">⚠ La stima è basata sui lotti attualmente presenti nel database. Lotti venduti durante il {{ year }} e rimossi non sono inclusi nel calcolo.</p>
 </div>
 
 {% endif %}
 </section>
 
-<section class="tasse-section">
-<h3 class="tasse-section-title">Quadro vendite {{ year }} — Plusvalenze (Redditi PF, Quadro RT)</h3>
-<p class="ivafe-subtitle">Riepilogo delle vendite AAPL registrate per l'anno {{ year }}, con corrispettivi, plusvalenza netta e imposta al 26% già calcolati da ciascuna vendita.</p>
+<section class="mb-10">
+<h3 class="text-xl font-bold tracking-tight mb-1">Quadro vendite {{ year }} — Plusvalenze (Redditi PF, Quadro RT)</h3>
+<p class="text-sm text-base-content/60 mb-4">Riepilogo delle vendite AAPL registrate per l'anno {{ year }}, con corrispettivi, plusvalenza netta e imposta al 26% già calcolati da ciascuna vendita.</p>
 
 {% if not sales_totals %}
-<article>
-  <p>Nessuna vendita registrata per l'anno {{ year }}.</p>
-</article>
+<div role="alert" class="alert alert-soft">
+  <span>Nessuna vendita registrata per l'anno {{ year }}.</span>
+</div>
 {% else %}
 
-<div class="summary-grid ivafe-grid">
-  <div class="summary-card card-portfolio">
-    <small>Corrispettivi totali {{ year }}</small>
-    <strong>€{{ sales_totals.gross_proceeds_eur|floatformat:2 }}</strong>
-    <small>{{ sales|length }} vendit{{ sales|length|pluralize:"a,e" }} · {{ sales_totals.qty|floatformat:"-4" }} azioni</small>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="stats bg-base-100 border border-base-300">
+    <div class="stat">
+      <div class="stat-title">Corrispettivi totali {{ year }}</div>
+      <div class="stat-value text-indigo-600">€{{ sales_totals.gross_proceeds_eur|floatformat:2 }}</div>
+      <div class="stat-desc">{{ sales|length }} vendit{{ sales|length|pluralize:"a,e" }} · {{ sales_totals.qty|floatformat:"-4" }} azioni</div>
+    </div>
   </div>
-  <div class="summary-card card-rsu">
-    <small>Plusvalenza netta {{ year }}</small>
-    <strong>€{{ sales_totals.net_gain_eur|floatformat:2 }}</strong>
+  <div class="stats bg-base-100 border border-base-300">
+    <div class="stat">
+      <div class="stat-title">Plusvalenza netta {{ year }}</div>
+      <div class="stat-value text-purple-600">€{{ sales_totals.net_gain_eur|floatformat:2 }}</div>
+    </div>
   </div>
-  <div class="summary-card card-taxes">
-    <small>Imposta stimata {{ year }} (26%)</small>
-    <strong>€{{ sales_totals.tax_eur|floatformat:2 }}</strong>
+  <div class="stats bg-base-100 border border-base-300">
+    <div class="stat">
+      <div class="stat-title">Imposta stimata {{ year }} (26%)</div>
+      <div class="stat-value text-orange-600">€{{ sales_totals.tax_eur|floatformat:2 }}</div>
+    </div>
   </div>
 </div>
 
-<div class="table-card">
-<figure>
-<table>
+<div class="card bg-base-100 border border-base-300 overflow-hidden mb-4 max-w-3xl mx-auto">
+<div class="overflow-x-auto">
+<table class="table table-sm">
   <thead>
     <tr>
-      <th>Data vendita</th>
-      <th>Azioni</th>
-      <th>Corrispettivo (€)</th>
-      <th>Plusvalenza (€)</th>
-      <th>Imposta 26% (€)</th>
+      <th class="text-center">Vendita</th>
+      <th class="text-center">Azioni</th>
+      <th class="text-center">Corrispettivo</th>
+      <th class="text-center">Plusvalenza</th>
+      <th class="text-center">Imposta</th>
     </tr>
   </thead>
   <tbody>
   {% for sale in sales %}
-  <tr>
-    <td>{{ sale.sale_date|date:"d/m/Y" }}</td>
-    <td>{{ sale.total_qty|floatformat:"-4" }}</td>
-    <td>€{{ sale.gross_proceeds_eur|floatformat:2 }}</td>
-    <td>€{{ sale.net_gain_eur|floatformat:2 }}</td>
-    <td>€{{ sale.tax_eur|floatformat:2 }}</td>
+  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+    <td class="text-center">{{ sale.sale_date|date:"d/m/Y" }}</td>
+    <td class="text-right">{{ sale.total_qty|floatformat:"-4" }}</td>
+    <td class="text-right">€{{ sale.gross_proceeds_eur|floatformat:2 }}</td>
+    <td class="text-right">€{{ sale.net_gain_eur|floatformat:2 }}</td>
+    <td class="text-right">€{{ sale.tax_eur|floatformat:2 }}</td>
   </tr>
   {% endfor %}
   </tbody>
 </table>
-</figure>
+</div>
 </div>
 
-<p class="ivafe-disclaimer">⚠ Importi convertiti in euro al cambio storico Banca d'Italia della rispettiva data di vendita. Riportare i dati nel Quadro RT seguendo le istruzioni del modello Redditi PF per le plusvalenze da cessione di strumenti finanziari esteri.</p>
+<p class="text-xs text-base-content/50">⚠ Importi convertiti in euro al cambio storico Banca d'Italia della rispettiva data di vendita. Riportare i dati nel Quadro RT seguendo le istruzioni del modello Redditi PF per le plusvalenze da cessione di strumenti finanziari esteri.</p>
 
 {% endif %}
 </section>
 
-<div class="ivafe-legal">
-  <p><strong>AVVERTENZA LEGALE — LIMITAZIONE DI RESPONSABILITÀ</strong></p>
-  <p>
+<div class="mt-8 border-t border-base-300 pt-5 text-xs leading-relaxed text-base-content/50">
+  <strong class="block mb-2 text-[11px] tracking-wide uppercase text-base-content/60">Avvertenza legale — limitazione di responsabilità</strong>
+  <p class="mb-3">
     Le informazioni, i dati e le elaborazioni forniti dalla presente applicazione sono messi a disposizione
     dell'utente a titolo meramente esemplificativo e informativo, senza alcuna garanzia — espressa o implicita —
     di completezza, accuratezza, aggiornamento o idoneità a qualsiasi scopo specifico, ivi inclusa la
     corretta compilazione di dichiarazioni fiscali.
   </p>
-  <p>
+  <p class="mb-3">
     L'utente è l'unico soggetto responsabile, ai sensi dell'art. 1 del D.P.R. 22 luglio 1998, n. 322
     e della normativa vigente in materia, della veridicità, correttezza e completezza delle proprie
     dichiarazioni tributarie presentate all'Agenzia delle Entrate. Nessuna elaborazione prodotta da

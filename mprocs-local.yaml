@@ -1,0 +1,5 @@
+procs:
+  web:
+    shell: uv run python app.py runserver
+  tailwind:
+    shell: uv run python app.py tailwind watch --noreload

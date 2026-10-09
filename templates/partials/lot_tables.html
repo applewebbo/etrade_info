@@ -7,30 +7,32 @@
       hx-swap="innerHTML">
   {% csrf_token %}
 
-  {% for group_label, group_lots, card_class in plan_groups %}
+  {% for group_label, group_lots, accent in plan_groups %}
   {% if group_lots %}
-  <article class="settings-card {{ card_class }} sim-table-card">
-    <h3>{{ group_label }}</h3>
-    <figure>
-    <table>
+  <div class="card bg-base-100 border border-base-300 overflow-hidden mb-6">
+    <div class="px-4 pt-4">
+      <h3 class="text-lg font-bold {% if accent == 'espp' %}text-emerald-600{% else %}text-purple-600{% endif %}">{{ group_label }}</h3>
+    </div>
+    <div class="overflow-x-auto">
+    <table class="table table-sm">
       <thead>
         <tr>
-          <th>Data acquisto</th>
-          <th>Data assegnazione</th>
-          <th>Costo acquisto</th>
-          <th>Disponibili</th>
-          <th>Periodo</th>
-          <th>Qtà da vendere</th>
+          <th class="text-center">Acquisto</th>
+          <th class="text-center">Assegnazione</th>
+          <th class="text-center">Costo</th>
+          <th class="text-center">Azioni</th>
+          <th class="text-center">Periodo</th>
+          <th class="text-center">Quantità</th>
         </tr>
       </thead>
       <tbody>
       {% for lot in group_lots %}
-        {% include "partials/lot_row.html" with lot=lot %}
+        {% include "partials/lot_row.html" with lot=lot accent=accent %}
       {% endfor %}
       </tbody>
     </table>
-    </figure>
-  </article>
+    </div>
+  </div>
   {% endif %}
   {% endfor %}
 

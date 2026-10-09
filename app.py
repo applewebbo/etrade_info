@@ -28,14 +28,24 @@ app = Django(
         "django.contrib.contenttypes",
         "django.contrib.auth",
         "django.contrib.staticfiles",
+        "django_tailwind_cli",
     ],
     STATIC_URL="/static/",
     STATICFILES_DIRS=["static"],
+    # No collectstatic step anywhere (app is distributed as a run-in-place zip),
+    # so the default whitenoise manifest storage can't resolve {% static %} lookups.
+    STORAGES={
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    },
+    TAILWIND_CLI_SRC_CSS="frontend/source.css",
+    TAILWIND_CLI_USE_DAISY_UI=True,
     TEMPLATES=[
         {
             "BACKEND": "django.template.backends.django.DjangoTemplates",
             "DIRS": ["templates"],
-            "APP_DIRS": False,
+            "APP_DIRS": True,
             "OPTIONS": {
                 "context_processors": [
                     "django.template.context_processors.request",
@@ -62,6 +72,10 @@ class Lot(models.Model):
     tax_status = models.CharField(
         max_length=20, choices=[(LONG_TERM, "Long Term"), (SHORT_TERM, "Short Term")]
     )
+
+    @property
+    def period_label(self):
+        return _holding_period_label(self.date_acquired, timezone.localdate())
 
     class Meta:
         ordering = ["date_acquired"]
@@ -411,6 +425,19 @@ def import_gains_losses(orders: list[dict], mode: str, year: int) -> int:
     return created
 
 
+def _holding_period_label(date_acquired: date, today: date) -> str:
+    """ "Periodo" shown on the dashboard: computed from today's date against a
+    3-year holding threshold, rather than trusting E*TRADE's own Long/Short
+    classification (which uses the US 1-year rule and is fixed at export
+    time, not updated as positions age)."""
+    try:
+        threshold = date_acquired.replace(year=date_acquired.year + 3)
+    except ValueError:
+        # date_acquired is Feb 29 and date_acquired.year + 3 isn't a leap year
+        threshold = date_acquired.replace(year=date_acquired.year + 3, day=28)
+    return "Long Term" if today >= threshold else "Short Term"
+
+
 def _portfolio_context():
     from prices import get_eur_usd_rate, get_price_direction, get_stock_price_usd, is_price_stale
     from tax_engine import calculate_sale_result
@@ -577,8 +604,8 @@ def simulate(request):
 
     lots = list(Lot.objects.all())
     plan_groups = [
-        ("ESPP", [lot for lot in lots if lot.plan_type == Lot.ESPP], "card-espp"),
-        ("RSU", [lot for lot in lots if lot.plan_type == Lot.RSU], "card-rsu"),
+        ("ESPP", [lot for lot in lots if lot.plan_type == Lot.ESPP], "espp"),
+        ("RSU", [lot for lot in lots if lot.plan_type == Lot.RSU], "rsu"),
     ]
     price_usd = get_stock_price_usd()
     eur_usd = get_eur_usd_rate()
@@ -613,6 +640,7 @@ def simulate(request):
             {
                 "result": result,
                 "sale_price": sale_price,
+                "sale_price_eur": (sale_price / sale_eur_usd) if sale_eur_usd else None,
                 "eur_usd": sale_eur_usd,
                 "sale_date": sale_date,
                 "rate_unavailable": rate_unavailable,
@@ -894,8 +922,8 @@ def simulate_lots(request):
 
     lots = list(Lot.objects.all())
     plan_groups = [
-        ("ESPP", [lot for lot in lots if lot.plan_type == Lot.ESPP], "card-espp"),
-        ("RSU", [lot for lot in lots if lot.plan_type == Lot.RSU], "card-rsu"),
+        ("ESPP", [lot for lot in lots if lot.plan_type == Lot.ESPP], "espp"),
+        ("RSU", [lot for lot in lots if lot.plan_type == Lot.RSU], "rsu"),
     ]
     price_usd = get_stock_price_usd()
     return render(

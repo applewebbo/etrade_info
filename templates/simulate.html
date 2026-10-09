@@ -2,74 +2,75 @@
 {% block title %}Simulatore — Etrade Portfolio{% endblock %}
 {% block content %}
 
-<h2>Simulatore vendita</h2>
+<h2 class="text-2xl font-bold tracking-tight mb-4">Simulatore vendita</h2>
 
 {% if not lots %}
-<article><p>Nessuna posizione. <a href="/import/">Importa prima il file XLSX</a>.</p></article>
+<div role="alert" class="alert alert-soft"><span>Nessuna posizione. <a href="/import/" class="link">Importa prima il file XLSX</a>.</span></div>
 {% else %}
 
-<div class="sim-grid">
+<div class="grid grid-cols-[minmax(0,1fr)_360px] max-[900px]:grid-cols-1 gap-6 items-start">
 
   <!-- Colonna sinistra: tabelle per tipo -->
-  <div class="sim-left"
-       hx-get="/simulate/lots/"
+  <div hx-get="/simulate/lots/"
        hx-trigger="saleComplete from:body"
        hx-swap="innerHTML">
     {% include "partials/lot_tables.html" %}
   </div>
 
   <!-- Colonna destra: prezzo + risultato -->
-  <div class="sim-sidebar">
-    <article class="settings-card card-portfolio">
-      <h3>Simulazione</h3>
+  <div>
+    <div class="card bg-base-100 border border-base-300">
+      <div class="card-body">
+      <h3 class="card-title">Simulazione</h3>
 
       {% if prices_unavailable %}
-      <p class="price-alert-offline">Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</p>
+      <div role="alert" class="alert alert-error alert-soft"><span>Prezzi non disponibili — nessuna connessione al servizio di quotazioni.</span></div>
       {% elif prices_stale %}
-      <p class="price-alert-stale">Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</p>
+      <div role="alert" class="alert alert-warning alert-soft"><span>Prezzi potenzialmente non aggiornati — ultimo aggiornamento fallito.</span></div>
       {% endif %}
 
-      <label>
-        Data vendita
+      <fieldset class="fieldset min-w-0">
+        <legend class="fieldset-legend">Data vendita</legend>
         <input type="date" name="sale_date" value="{{ sale_date|date:'Y-m-d' }}"
                oninput="document.getElementById('sim-form').dispatchEvent(new Event('change'))"
-               form="sim-form" />
-        <small class="sim-live-info">Per date passate il cambio EUR/USD viene recuperato da Banca d'Italia.</small>
-      </label>
+               form="sim-form" class="input input-sm w-44 min-w-0" />
+        <p class="text-xs text-base-content/60 whitespace-normal">Per date passate il cambio EUR/USD viene recuperato da Banca d'Italia.</p>
+      </fieldset>
 
-      <label>
-        Prezzo vendita (USD)
+      <fieldset class="fieldset min-w-0">
+        <legend class="fieldset-legend">Prezzo vendita (USD)</legend>
         <input type="number" name="sale_price" step="any" min="0"
                value="{{ price_usd|floatformat:'2u' }}"
                placeholder="{% if prices_unavailable %}Prezzo non disponibile{% else %}Prezzo vendita USD{% endif %}"
                oninput="document.getElementById('sale-price-hidden').value=this.value; document.getElementById('sim-form').dispatchEvent(new Event('change'))"
-               form="sim-form" />
+               form="sim-form" class="input input-sm w-28 min-w-0" />
         {% if not prices_unavailable %}
-        <small class="sim-live-info">AAPL live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }}) · EUR/USD {{ eur_usd|floatformat:4 }}</small>
+        <p class="text-xs text-base-content/60 whitespace-normal">AAPL live: ${{ price_usd|floatformat:2 }} (€{{ price_eur|floatformat:2 }}) · EUR/USD {{ eur_usd|floatformat:4 }}</p>
         {% endif %}
-      </label>
+      </fieldset>
 
-      <div class="sim-result-area">
-        <div id="sim-spinner" class="sim-spinner htmx-indicator"></div>
+      <div class="relative mt-2">
+        <span id="sim-spinner" class="loading loading-spinner htmx-indicator absolute right-2 top-2"></span>
         <div id="sim-result">
-          <p class="sim-result-placeholder">Inserisci le quantità da vendere per vedere il calcolo.</p>
+          <p class="text-base-content/60">Inserisci le quantità da vendere per vedere il calcolo.</p>
         </div>
       </div>
-    </article>
+      </div>
+    </div>
   </div>
 
 </div>
 {% endif %}
 
-<div class="ivafe-legal">
-  <p><strong>AVVERTENZA LEGALE — LIMITAZIONE DI RESPONSABILITÀ</strong></p>
-  <p>
+<div class="mt-8 border-t border-base-300 pt-5 text-xs leading-relaxed text-base-content/50">
+  <strong class="block mb-2 text-[11px] tracking-wide uppercase text-base-content/60">Avvertenza legale — limitazione di responsabilità</strong>
+  <p class="mb-3">
     Le informazioni, i dati e le elaborazioni forniti dalla presente applicazione sono messi a disposizione
     dell'utente a titolo meramente esemplificativo e informativo, senza alcuna garanzia — espressa o implicita —
     di completezza, accuratezza, aggiornamento o idoneità a qualsiasi scopo specifico, ivi inclusa la
     corretta determinazione di plusvalenze, minusvalenze o imposte dovute.
   </p>
-  <p>
+  <p class="mb-3">
     L'utente è l'unico soggetto responsabile, ai sensi dell'art. 1 del D.P.R. 22 luglio 1998, n. 322
     e della normativa vigente in materia, della veridicità, correttezza e completezza delle proprie
     dichiarazioni tributarie presentate all'Agenzia delle Entrate. Nessuna elaborazione prodotta da

@@ -1,59 +1,60 @@
 {% load l10n %}
 {% if result %}
-<article class="sim-summary-card">
-  <header><strong>Risultato simulazione</strong> — vendita a ${{ sale_price|floatformat:2 }}</header>
-  <table>
-    <tr><th>Ricavo lordo</th>
-        <td>${{ result.gross_proceeds_usd|floatformat:2 }}</td>
-        <td>€{{ result.gross_proceeds_eur|floatformat:2 }}</td></tr>
-    <tr><th>Costo acquisto totale</th>
-        <td>${{ result.total_cost_basis_usd|floatformat:2 }}</td>
-        <td>€{{ result.total_cost_basis_eur|floatformat:2 }}</td></tr>
-    <tr><th>Plusvalenza netta</th>
-        <td>${{ result.net_gain_usd|floatformat:2 }}</td>
-        <td>€{{ result.net_gain_eur|floatformat:2 }}</td></tr>
-    <tr><th><strong>Imposta (26%)</strong></th>
-        <td><strong>${{ result.tax_usd|floatformat:2 }}</strong></td>
-        <td><strong>€{{ result.tax_eur|floatformat:2 }}</strong></td></tr>
-    <tr><th>Netto dopo tasse</th>
-        <td>${{ result.net_after_tax_usd|floatformat:2 }}</td>
-        <td>€{{ result.net_after_tax_eur|floatformat:2 }}</td></tr>
+<div class="card bg-base-100 border border-base-300 rounded-b-none border-b-0">
+  <div class="card-body p-4">
+  <h4 class="font-bold mb-2">Risultato simulazione — vendita a €{{ sale_price_eur|floatformat:2 }}</h4>
+  <table class="table table-sm table-fixed w-full">
+    <colgroup>
+      <col class="w-[60%]" /><col class="w-[40%]" />
+    </colgroup>
+    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Ricavo lordo</th>
+        <td class="text-right">€{{ result.gross_proceeds_eur|floatformat:2 }}</td></tr>
+    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Costo acquisto</th>
+        <td class="text-right">€{{ result.total_cost_basis_eur|floatformat:2 }}</td></tr>
+    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Plusvalenza netta</th>
+        <td class="text-right">€{{ result.net_gain_eur|floatformat:2 }}</td></tr>
+    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th><strong>Imposta (26%)</strong></th>
+        <td class="text-right"><strong>€{{ result.tax_eur|floatformat:2 }}</strong></td></tr>
+    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Netto dopo tasse</th>
+        <td class="text-right">€{{ result.net_after_tax_eur|floatformat:2 }}</td></tr>
   </table>
-</article>
+  </div>
+</div>
 {% if result.per_lot %}
-<div class="sim-detail">
-  <p class="sim-detail-label">Dettaglio per posizione</p>
-  <figure>
-  <table>
-    <thead><tr><th>Data</th><th>Assegnazione</th><th>Qtà</th><th>Costo acquisto</th><th>Plusvalenza</th></tr></thead>
+<div class="card bg-base-100 border border-base-300 rounded-t-none border-t-0">
+  <div class="card-body p-4">
+  <p class="text-xs uppercase tracking-wide text-base-content/50 mb-2">Dettaglio per posizione</p>
+  <table class="table table-sm table-fixed w-full">
+    <colgroup>
+      <col class="w-[40%]" /><col class="w-[20%]" /><col class="w-[40%]" />
+    </colgroup>
+    <thead><tr><th class="text-center">Data</th><th class="text-center">Qtà</th><th class="text-center">Plusvalenza</th></tr></thead>
     <tbody>
     {% for entry in result.per_lot %}
-    <tr class="sim-row-{% if entry.lot.plan_type == 'ESPP' %}espp{% else %}rsu{% endif %}">
-      <td>{{ entry.lot.date_acquired|date:"d/m/y" }}</td>
-      <td>{{ entry.lot.grant_date|date:"d/m/y"|default:"—" }}</td>
-      <td>{{ entry.qty }}</td>
-      <td>${{ entry.lot.cost_basis|floatformat:4 }}</td>
-      <td>${{ entry.gain_usd|floatformat:2 }}</td>
+    <tr class="{% if entry.lot.plan_type == 'ESPP' %}bg-emerald-50{% else %}bg-purple-50{% endif %}">
+      <td class="text-center">{{ entry.lot.date_acquired|date:"d/m/y" }}</td>
+      <td class="text-right">{{ entry.qty }}</td>
+      <td class="text-right">€{{ entry.gain_eur|floatformat:2 }}</td>
     </tr>
     {% endfor %}
     </tbody>
   </table>
-  </figure>
+  </div>
 </div>
 {% endif %}
-<div class="sell-action">
+<div class="mt-4 flex justify-end">
   <button type="button"
           hx-post="/sell/"
           hx-vals='{"sale_price": "{{ sale_price|unlocalize }}", "eur_usd": "{{ eur_usd|unlocalize }}", "sale_date": "{{ sale_date|date:"Y-m-d" }}"{% for entry in result.per_lot %}, "qty_{{ entry.lot.pk }}": "{{ entry.qty|unlocalize }}"{% endfor %}}'
           hx-target="#sim-result"
           hx-swap="innerHTML"
-          hx-confirm="Conferma la vendita di {{ result.per_lot|length }} posizioni a ${{ sale_price|floatformat:2 }}?&#10;Ricavo lordo: ${{ result.gross_proceeds_usd|floatformat:2 }}&#10;Tasse stimate: ${{ result.tax_usd|floatformat:2 }}"
-          class="sell-btn">
+          hx-confirm="Conferma la vendita di {{ result.per_lot|length }} posizioni a €{{ sale_price_eur|floatformat:2 }}?&#10;Ricavo lordo: €{{ result.gross_proceeds_eur|floatformat:2 }}&#10;Tasse stimate: €{{ result.tax_eur|floatformat:2 }}"
+          class="btn btn-primary">
     Vendi
   </button>
 </div>
 {% elif rate_unavailable %}
-<article><p>Cambio storico non disponibile per questa data.</p></article>
+<div role="alert" class="alert alert-error alert-soft"><span>Cambio storico non disponibile per questa data.</span></div>
 {% else %}
-<article><p>Seleziona almeno una posizione per vedere il calcolo.</p></article>
+<p class="text-base-content/60">Seleziona almeno una posizione per vedere il calcolo.</p>
 {% endif %}

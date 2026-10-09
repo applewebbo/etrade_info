@@ -1,43 +1,45 @@
+{% load tailwind_cli %}
 <!doctype html>
-<html lang="it" data-theme="light">
+<html lang="it" data-theme="corporate">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}Etrade Portfolio{% endblock %}</title>
-    <link rel="icon" href="/static/icons/stocks.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/blades.min.css" />
-    <link rel="stylesheet" href="/static/pico.colors.min.css" />
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="icon" href="/static/icons/chart-candle.svg" type="image/svg+xml" />
+    {% tailwind_css %}
+    <link rel="stylesheet" href="/static/css/custom.css" />
     <script src="/static/htmx.min.js" defer></script>
     <script src="/static/alpine.min.js" defer></script>
   </head>
-  <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% csrf_token %}
-    <header class="site-header">
-      <nav class="container">
-        <ul><li>
-          <a href="/" class="site-brand">
-            <img src="/static/icons/stocks.svg" class="site-icon" alt="" aria-hidden="true" />
-            <span class="site-title">Etrade Portfolio</span>
+  <body class="min-h-screen bg-base-200" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% csrf_token %}
+    <header class="bg-base-300">
+      <nav class="navbar max-w-7xl mx-auto px-4">
+        <div class="navbar-start">
+          <a href="/" class="flex items-center gap-2 text-lg font-bold">
+            <img src="/static/icons/stocks.svg" class="size-6" alt="" aria-hidden="true" />
+            Etrade Portfolio
           </a>
-        </li></ul>
-        <ul>
-          <li><a href="/" {% if request.path == "/" %}aria-current="page"{% endif %}>Dashboard</a></li>
-          <li><a href="/simulate/" {% if request.path == "/simulate/" %}aria-current="page"{% endif %}>Vendita</a></li>
-          <li><a href="/tasse/" {% if request.path == "/tasse/" %}aria-current="page"{% endif %}>Tasse</a></li>
-          <li><a href="/import/" {% if request.path == "/import/" %}aria-current="page"{% endif %}>Impostazioni</a></li>
-        </ul>
+        </div>
+        <div class="navbar-end">
+          <ul class="menu menu-horizontal gap-1">
+            <li><a href="/" {% if request.path == "/" %}aria-current="page"{% endif %} class="aria-current:font-bold">Dashboard</a></li>
+            <li><a href="/simulate/" {% if request.path == "/simulate/" %}aria-current="page"{% endif %} class="aria-current:font-bold">Vendita</a></li>
+            <li><a href="/tasse/" {% if request.path == "/tasse/" %}aria-current="page"{% endif %} class="aria-current:font-bold">Tasse</a></li>
+            <li><a href="/import/" {% if request.path == "/import/" %}aria-current="page"{% endif %} class="aria-current:font-bold">Impostazioni</a></li>
+          </ul>
+        </div>
       </nav>
     </header>
-    <main class="container">{% block content %}{% endblock %}</main>
-    <footer class="site-footer container">
-      <span class="site-footer-copyright">© {% now "Y" %} Etrade Portfolio</span>
-      <nav class="site-footer-links">
-        <a href="https://github.com/applewebbo/etrade_info" target="_blank" rel="noopener">
-          <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+    <main class="max-w-7xl mx-auto px-4 py-6">{% block content %}{% endblock %}</main>
+    <footer class="border-t border-base-300 max-w-7xl mx-auto px-4 py-4 flex items-center justify-between text-sm text-base-content/70">
+      <span>© {% now "Y" %} Etrade Portfolio</span>
+      <nav class="flex items-center gap-4">
+        <a href="https://github.com/applewebbo/etrade_info" target="_blank" rel="noopener" class="flex items-center gap-1 hover:text-base-content">
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path></svg>
           Codice sorgente
         </a>
-        <a href="/novita/">
-          <svg class="footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.24H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.58a2 2 0 0 0 2.83 0l5.59-5.59a2 2 0 0 0 0-2.83Z"></path><circle cx="7.5" cy="7.5" r="1.5"></circle></svg>
+        <a href="/novita/" class="flex items-center gap-1 hover:text-base-content">
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3"></path></svg>
           v{{ current_version }}
         </a>
       </nav>

@@ -20,17 +20,24 @@ default:
 @update: update-assets
     uv sync --upgrade
 
-# Re-download vendored CSS/JS libraries (htmx, Alpine.js, Blades CSS, Inter font)
+# Re-download vendored CSS/JS libraries (htmx, Alpine.js, Inter font, Tabler icons) and rebuild Tailwind CSS
 [group('setup')]
-update-assets:
+update-assets: tailwind-build
     curl -fsSL https://cdn.jsdelivr.net/npm/htmx.org/dist/htmx.min.js -o static/htmx.min.js
     curl -fsSL https://cdn.jsdelivr.net/npm/alpinejs/dist/cdn.min.js -o static/alpine.min.js
-    curl -fsSL https://cdn.jsdelivr.net/npm/@anyblades/blades@3/css/blades.min.css -o static/blades.min.css
-    curl -fsSL https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.colors.min.css -o static/pico.colors.min.css
     curl -fsSL https://cdn.jsdelivr.net/npm/@fontsource/inter@5/files/inter-latin-400-normal.woff2 -o static/fonts/inter-400.woff2
     curl -fsSL https://cdn.jsdelivr.net/npm/@fontsource/inter@5/files/inter-latin-600-normal.woff2 -o static/fonts/inter-600.woff2
     curl -fsSL https://cdn.jsdelivr.net/npm/@fontsource/inter@5/files/inter-latin-700-normal.woff2 -o static/fonts/inter-700.woff2
-    echo "✓ Librerie statiche (htmx, Alpine.js, Blades CSS, Inter) aggiornate in static/"
+    curl -fsSL https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/outline/info-circle.svg -o static/icons/info-circle.svg
+    curl -fsSL https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/outline/brand-github.svg -o static/icons/brand-github.svg
+    curl -fsSL https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/outline/tag.svg -o static/icons/tag.svg
+    curl -fsSL https://cdn.jsdelivr.net/npm/@tabler/icons@latest/icons/outline/chart-candle.svg -o static/icons/chart-candle.svg
+    echo "✓ Librerie statiche (htmx, Alpine.js, Inter, Tabler icons) aggiornate in static/"
+
+# Compile the Tailwind CSS + daisyUI stylesheet
+[group('setup')]
+tailwind-build:
+    uv run python app.py tailwind build
 
 # Rebuild lock file
 [group('setup')]
@@ -40,7 +47,7 @@ update-assets:
 # Remove temp files and venv
 [group('setup')]
 clean:
-    rm -rf .venv .pytest_cache .ruff_cache .coverage htmlcov
+    rm -rf .venv .pytest_cache .ruff_cache .coverage htmlcov .django_tailwind_cli
     find . -type d -name "__pycache__" -exec rm -r {} +
 
 # Recreate venv from scratch
@@ -56,6 +63,11 @@ fresh: clean install
 [group('development')]
 @run:
     uv run python app.py runserver
+
+# Run dev server + Tailwind CSS watch mode together (auto-rebuild on template changes)
+[group('development')]
+@serve:
+    dekit mprocs -c mprocs-local.yaml
 
 # Run database migrations
 [group('development')]
@@ -202,7 +214,7 @@ release-create tag previous_tag="" notes_file="" draft="false" prerelease="false
 
 # Build minimal distribution zip for end users
 [group('distribution')]
-dist:
+dist: tailwind-build
     #!/usr/bin/env bash
     set -e
     ROOT="$(pwd)"

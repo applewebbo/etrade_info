@@ -12,7 +12,8 @@ dependencies = [
   "nanodjango",
   "yfinance",
   "pandas",
-  "openpyxl"
+  "openpyxl",
+  "django-tailwind-cli"
 ]
 description = "Local equity tax simulator for Italian regime dichiarativo"
 name = "etrade-info"

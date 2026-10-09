@@ -14,3 +14,4 @@ dist/
 plans/
 uploads/
 .playwright-mcp/
+.django_tailwind_cli/

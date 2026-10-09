@@ -422,11 +422,13 @@ class TestSimulateLotsView:
 
 @pytest.mark.django_db
 class TestDashboardView:
-    def test_page_links_blades_css_not_pico(self, client, mock_prices):
+    def test_page_links_tailwind_css(self, client, mock_prices):
         response = client.get("/")
         content = response.content.decode()
-        assert "/static/blades.min.css" in content
-        assert "/static/pico.min.css" not in content
+        assert "/static/css/tailwind.css" in content
+        assert "/static/css/custom.css" in content
+        assert "/static/blades.min.css" not in content
+        assert "/static/pico.colors.min.css" not in content
 
     def test_dashboard_with_lots_and_prices(self, client, mock_prices):
         from app import Lot
@@ -618,6 +620,36 @@ class TestSimulateView:
         )
         assert response.status_code == 200
         assert b"cambio storico non disponibile" in response.content.lower()
+
+
+class TestHoldingPeriodLabel:
+    def test_exactly_three_years_is_long_term(self):
+        from app import _holding_period_label
+
+        acquired = date(2021, 6, 15)
+        today = date(2024, 6, 15)
+        assert _holding_period_label(acquired, today) == "Long Term"
+
+    def test_one_day_short_of_three_years_is_short_term(self):
+        from app import _holding_period_label
+
+        acquired = date(2021, 6, 15)
+        today = date(2024, 6, 14)
+        assert _holding_period_label(acquired, today) == "Short Term"
+
+    def test_leap_day_acquisition_falls_back_to_feb_28(self):
+        from app import _holding_period_label
+
+        acquired = date(2020, 2, 29)
+        today = date(2023, 2, 28)
+        assert _holding_period_label(acquired, today) == "Long Term"
+
+    def test_leap_day_acquisition_short_term_before_feb_28(self):
+        from app import _holding_period_label
+
+        acquired = date(2020, 2, 29)
+        today = date(2023, 2, 27)
+        assert _holding_period_label(acquired, today) == "Short Term"
 
 
 @pytest.mark.django_db
