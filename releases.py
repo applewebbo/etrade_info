@@ -12,12 +12,12 @@ from django.http import HttpRequest
 RELEASES: list[dict] = [
     {
         "version": "2026.1",
-        "date": date(2026, 10, 7),
+        "date": date(2026, 10, 9),
         "notes": [
-            "La vendita simulata può ora avere una data nel passato: in quel caso le tasse vengono calcolate con il cambio EUR/USD storico di Banca d'Italia, non con quello di oggi.",
-            "Corretto un errore che poteva bloccare l'importazione del file E*TRADE quando nel portafoglio ci sono più posizioni acquistate nello stesso giorno allo stesso prezzo.",
-            "L'importazione ora riconosce quando E*TRADE aggiorna una stima già presente (es. il costo di acquisto di una posizione ESPP) e la corregge, invece di creare una posizione duplicata.",
-            "Introdotto un numero di versione per il sito, a partire da questa release.",
+            "La vendita simulata può ora avere una data nel passato (cambio EUR/USD storico di Banca d'Italia) e l'importazione del file E*TRADE è più robusta: niente più blocchi su posizioni duplicate, e le stime che E*TRADE aggiorna vengono recepite invece di creare duplicati.",
+            "La pagina IVAFE è diventata la pagina Tasse, con un riepilogo delle vendite dell'anno (quadro vendite) e un'anteprima provvisoria dell'anno in corso.",
+            'Nuova importazione del file "Gains & Losses" di E*TRADE per registrare in blocco le vendite storiche con il cambio corretto per ogni data di vendita, e nuova pagina "Novità e aggiornamenti" con lo storico delle versioni.',
+            "Aggiornamento grafico del sito (nuovo font, footer rivisto), passaggio del codice sorgente da Codeberg a GitHub, e un link che punta sempre all'ultima versione scaricabile dell'app.",
         ],
     },
 ]
