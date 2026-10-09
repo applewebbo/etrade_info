@@ -511,7 +511,7 @@ dependencies = [
 ]
 name = "etrade-info"
 source = { virtual = "." }
-version = "2026.1"
+version = "2026.2"
 
 [package.dev-dependencies]
 dev = [
