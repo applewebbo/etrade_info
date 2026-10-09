@@ -3,6 +3,7 @@ import os
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 
 from django.db import models
 from django.utils import timezone
@@ -77,6 +78,7 @@ class Sale(models.Model):
     gross_proceeds_usd = models.DecimalField(max_digits=14, decimal_places=5)
     net_gain_usd = models.DecimalField(max_digits=14, decimal_places=5)
     tax_usd = models.DecimalField(max_digits=14, decimal_places=5)
+    order_number = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -100,7 +102,7 @@ class Sale(models.Model):
 
 class SaleLot(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="lots")
-    original_lot_id = models.IntegerField()
+    original_lot_id = models.IntegerField(null=True, blank=True)
     symbol = models.CharField(max_length=10)
     plan_type = models.CharField(max_length=10)
     date_acquired = models.DateField()
@@ -350,6 +352,63 @@ def _execute_sale(
             lot.save()
             updated_lots.append(lot)
     return {"sale": sale, "updated_lots": updated_lots, "deleted_lot_pks": deleted_lot_pks}
+
+
+def import_gains_losses(orders: list[dict], mode: str, year: int) -> int:
+    """Batch-record historical sales from a parsed Gains & Losses export.
+
+    Scoped to a single reference tax `year`. In "overwrite" mode, replaces all
+    previously-imported (order_number-tagged) Sale/SaleLot records for that
+    year, leaving manually-recorded sales untouched. In "incremental" mode,
+    skips orders whose order_number is already recorded. Both modes are
+    idempotent: re-running the same import yields the same end state.
+    Does not touch Lot.sellable_qty.
+    """
+    from tax_engine import calculate_sale_result
+
+    orders = [o for o in orders if o["sale_date"].year == year]
+
+    if mode == "overwrite":
+        Sale.objects.filter(sale_date__year=year, order_number__isnull=False).delete()
+    else:
+        existing = set(
+            Sale.objects.filter(order_number__isnull=False).values_list("order_number", flat=True)
+        )
+        orders = [o for o in orders if o["order_number"] not in existing]
+
+    created = 0
+    for order in orders:
+        eur_usd = _resolve_sale_rate(order["sale_date"])
+        if eur_usd is None:
+            continue
+
+        lots_with_qty = [(SimpleNamespace(**t), t["qty"]) for t in order["tranches"]]
+        result = calculate_sale_result(lots_with_qty, order["sale_price_usd"], eur_usd)
+        sale = Sale.objects.create(
+            sale_date=order["sale_date"],
+            sale_price_usd=order["sale_price_usd"],
+            eur_usd_rate=eur_usd,
+            gross_proceeds_usd=result["gross_proceeds_usd"],
+            net_gain_usd=result["net_gain_usd"],
+            tax_usd=result["tax_usd"],
+            order_number=order["order_number"],
+        )
+        for entry in result["per_lot"]:
+            tranche = entry["lot"]
+            SaleLot.objects.create(
+                sale=sale,
+                original_lot_id=None,
+                symbol=tranche.symbol,
+                plan_type=tranche.plan_type,
+                date_acquired=tranche.date_acquired,
+                grant_date=tranche.grant_date,
+                qty_sold=entry["qty"],
+                cost_basis=tranche.cost_basis,
+                tax_status=tranche.tax_status,
+                gain_usd=entry["gain_usd"],
+            )
+        created += 1
+    return created
 
 
 def _portfolio_context():
