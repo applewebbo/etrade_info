@@ -193,7 +193,7 @@ release-create tag previous_tag="" notes_file="" draft="false" prerelease="false
         RELEASE_FLAGS+=(--prerelease)
     fi
 
-    gh release create "{{ tag }}" -R {{ github_repo }} "dist/Etrade Portfolio.zip" "${RELEASE_FLAGS[@]}"
+    gh release create "{{ tag }}" -R {{ github_repo }} "dist/EtradePortfolio.zip" "${RELEASE_FLAGS[@]}"
 
 
 ##########################################################################
@@ -206,7 +206,7 @@ dist:
     #!/usr/bin/env bash
     set -e
     ROOT="$(pwd)"
-    rm -rf "dist/Etrade Portfolio" "dist/Etrade Portfolio.zip"
+    rm -rf "dist/Etrade Portfolio" "dist/EtradePortfolio.zip"
     mkdir -p "dist/Etrade Portfolio"
     cp start.command uninstall.command \
        app.py prices.py tax_engine.py xlsx_parser.py \
@@ -215,7 +215,7 @@ dist:
        "dist/Etrade Portfolio/"
     cp -r templates static migrations "dist/Etrade Portfolio/"
     cd "dist"
-    zip -r "Etrade Portfolio.zip" "Etrade Portfolio" -x "*/__pycache__/*" -x "*/.DS_Store"
+    zip -r "EtradePortfolio.zip" "Etrade Portfolio" -x "*/__pycache__/*" -x "*/.DS_Store"
     rm -rf "Etrade Portfolio"
     cd "$ROOT"
-    echo "✓ dist/Etrade Portfolio.zip pronto per la distribuzione"
+    echo "✓ dist/EtradePortfolio.zip pronto per la distribuzione"
