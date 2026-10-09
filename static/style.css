@@ -392,23 +392,57 @@ button.danger:focus, button.danger:focus-visible {
   flex-shrink: 0;
 }
 
-.import-grid {
+.import-section-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-  align-items: start;
+  align-items: stretch;
 }
 @media (max-width: 640px) {
-  .import-grid { grid-template-columns: 1fr; }
+  .import-section-grid { grid-template-columns: 1fr; }
 }
 
-.import-col-label {
+.import-section-col {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  padding: 1rem;
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: .5rem;
+}
+
+.import-section-title {
   font-size: .7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .06em;
   color: var(--pico-muted-color);
-  margin-bottom: .5rem;
+  margin: 0;
+}
+
+.import-compact-form {
+  display: flex;
+  flex-direction: column;
+  gap: .875rem;
+  flex: 1;
+}
+
+.import-compact-form .form-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.mode-hint {
+  margin: .4rem 0 0;
+  font-size: .78rem;
+  color: var(--pico-muted-color);
 }
 
 .file-drop {
@@ -446,40 +480,18 @@ button.danger:focus, button.danger:focus-visible {
   color: var(--pico-muted-color);
 }
 
-.mode-card {
+.import-year-label {
   display: flex;
-  align-items: flex-start;
-  gap: .75rem;
-  border: 1px solid var(--pico-muted-border-color);
-  border-radius: .5rem;
-  padding: .875rem 1rem;
-  margin-bottom: .625rem;
-  cursor: pointer;
-  transition: border-color .15s, background .15s;
-}
-.mode-card:last-child { margin-bottom: 0; }
-.mode-card:has(.mode-radio:checked) {
-  border-color: var(--pico-primary);
-  background: var(--pico-color-indigo-50);
-}
-.mode-card:has(.mode-radio:checked) .mode-card-title { color: var(--pico-primary); }
-.mode-card:has(.mode-radio:checked) .mode-card-desc  { color: var(--pico-muted-color); }
-.mode-radio {
-  margin-top: .15rem;
-  flex-shrink: 0;
-}
-.mode-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: .2rem;
-}
-.mode-card-title {
-  font-weight: 600;
-  font-size: .9rem;
-}
-.mode-card-desc {
-  font-size: .8rem;
+  align-items: center;
+  gap: .5rem;
+  font-size: .78rem;
   color: var(--pico-muted-color);
+}
+.import-year-select {
+  width: auto;
+  margin: 0;
+  padding: .25rem .5rem;
+  font-size: .8rem;
 }
 
 tbody tr:nth-child(even) td,

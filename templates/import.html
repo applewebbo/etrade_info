@@ -6,59 +6,78 @@
 
 <section>
   <article class="settings-card card-portfolio">
-    <h3>Importa portfolio</h3>
+    <h3>Importa</h3>
     {% if count %}
     <p class="import-status">
       <span class="import-status-dot"></span>
       <strong>{{ count }} posizioni</strong> attualmente caricate
     </p>
     {% endif %}
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <div class="import-grid">
+    <div class="import-section-grid">
 
-        <div class="import-col">
-          <p class="import-col-label">File</p>
-          <label class="file-drop" x-data="{ name: '' }">
-            <input type="file" name="xlsx" accept=".xlsx" required
-                   x-on:change="name = $event.target.files[0]?.name ?? ''"
-                   class="file-drop-input" />
-            <span class="file-drop-icon">📂</span>
-            <span class="file-drop-hint" x-text="name || 'ByStatus_expanded.xlsx'"></span>
-            <span class="file-drop-sub">Clicca per selezionare il file</span>
-          </label>
-        </div>
+      <div class="import-section-col">
+        <h4 class="import-section-title">Portfolio (Sellable)</h4>
+        <form method="post" enctype="multipart/form-data" class="import-compact-form">
+          {% csrf_token %}
+          <input type="file" name="xlsx" accept=".xlsx" required />
 
-        <div class="import-col">
-          <p class="import-col-label">Modalità</p>
-          <label class="mode-card mode-card-overwrite" x-data>
-            <input type="radio" name="mode" value="overwrite" checked class="mode-radio" />
-            <span class="mode-card-body">
-              <span class="mode-card-title">Sovrascrivi</span>
-              <span class="mode-card-desc">Elimina tutte le posizioni esistenti e importa il file</span>
-            </span>
-          </label>
-          <label class="mode-card mode-card-incremental">
-            <input type="radio" name="mode" value="incremental" class="mode-radio" />
-            <span class="mode-card-body">
-              <span class="mode-card-title">Aggiungi</span>
-              <span class="mode-card-desc">Aggiunge solo le posizioni non ancora presenti</span>
-            </span>
-          </label>
-          <label class="mode-card mode-card-incremental">
-            <input type="radio" name="mode" value="update_grant" class="mode-radio" />
-            <span class="mode-card-body">
-              <span class="mode-card-title">Aggiorna assegnazioni</span>
-              <span class="mode-card-desc">Compila la data di assegnazione sulle posizioni esistenti e vendute, senza toccare altri dati</span>
-            </span>
-          </label>
-        </div>
+          <div class="mode-field" x-data="{ mode: 'overwrite' }">
+            <div class="mode-options">
+              <input type="radio" id="sellable-mode-overwrite" name="mode" value="overwrite" x-model="mode" checked />
+              <label for="sellable-mode-overwrite">Sovrascrivi</label>
+              <input type="radio" id="sellable-mode-incremental" name="mode" value="incremental" x-model="mode" />
+              <label for="sellable-mode-incremental">Aggiungi</label>
+              <input type="radio" id="sellable-mode-update-grant" name="mode" value="update_grant" x-model="mode" />
+              <label for="sellable-mode-update-grant">Assegnazioni</label>
+            </div>
+            <p class="mode-hint">
+              <span x-show="mode === 'overwrite'">Elimina tutte le posizioni esistenti e importa il file.</span>
+              <span x-show="mode === 'incremental'">Aggiunge solo le posizioni non ancora presenti.</span>
+              <span x-show="mode === 'update_grant'">Compila la data di assegnazione sulle posizioni esistenti e vendute, senza toccare altri dati.</span>
+            </p>
+          </div>
 
+          <div class="form-actions">
+            <button type="submit">Importa</button>
+          </div>
+        </form>
       </div>
-      <div class="form-actions">
-        <button type="submit">Importa</button>
+
+      <div class="import-section-col">
+        <h4 class="import-section-title">Vendite (Gains &amp; Losses)</h4>
+        <form method="post" enctype="multipart/form-data" class="import-compact-form">
+          {% csrf_token %}
+          <input type="file" name="gl_xlsx" accept=".xlsx" required />
+
+          <div class="mode-field" x-data="{ mode: 'overwrite' }">
+            <div class="mode-options">
+              <input type="radio" id="gl-mode-overwrite" name="gl_mode" value="overwrite" x-model="mode" checked />
+              <label for="gl-mode-overwrite">Sovrascrivi</label>
+              <input type="radio" id="gl-mode-incremental" name="gl_mode" value="incremental" x-model="mode" />
+              <label for="gl-mode-incremental">Aggiungi</label>
+            </div>
+            <p class="mode-hint">
+              <span x-show="mode === 'overwrite'">Sostituisce le vendite già importate per l'anno selezionato.</span>
+              <span x-show="mode === 'incremental'">Aggiunge solo gli ordini non ancora registrati.</span>
+            </p>
+          </div>
+
+          <label class="import-year-label">
+            Anno fiscale
+            <select name="year" class="import-year-select">
+              {% for y in gl_years %}
+              <option value="{{ y }}" {% if y == gl_default_year %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit">Importa</button>
+          </div>
+        </form>
       </div>
-    </form>
+
+    </div>
   </article>
 </section>
 

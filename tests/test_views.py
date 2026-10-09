@@ -497,6 +497,45 @@ class TestImportViewPost:
         assert response.status_code == 302
         assert Lot.objects.count() == 1
 
+    def test_post_with_gl_xlsx_imports_sales_and_redirects_to_tasse(self, client, monkeypatch):
+        import io
+
+        import bdi_rates
+        from app import Sale
+
+        monkeypatch.setattr(
+            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("1.10")
+        )
+
+        data = {
+            "Record Type": ["Sell"],
+            "Symbol": ["AAPL"],
+            "Plan Type": ["RS"],
+            "Quantity": [2],
+            "Date Acquired": ["10/15/2022"],
+            "Adjusted Cost Basis Per Share": [146.54],
+            "Date Sold": ["05/12/2024"],
+            "Total Proceeds": [589.99],
+            "Capital Gains Status": ["Long"],
+            "Grant Date": ["09/26/2021"],
+            "Order Number": [102663927.0],
+        }
+        buf = io.BytesIO()
+        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+            pd.DataFrame(data).to_excel(writer, sheet_name="G&L_Expanded", index=False)
+        buf.seek(0)
+        buf.name = "gl.xlsx"
+
+        response = client.post(
+            "/import/",
+            {"gl_xlsx": buf, "gl_mode": "overwrite", "year": "2024"},
+            format="multipart",
+        )
+        assert response.status_code == 302
+        assert response["Location"] == "/tasse/?year=2024"
+        assert Sale.objects.count() == 1
+        assert Sale.objects.first().order_number == "102663927"
+
 
 @pytest.mark.django_db
 class TestSimulateView:

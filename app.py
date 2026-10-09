@@ -524,30 +524,47 @@ def prices_fragment(request):
     return render(request, "partials/price_header.html", ctx)
 
 
+def _save_upload_to_tmp(f) -> str:
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+        for chunk in f.chunks():
+            tmp.write(chunk)
+        return tmp.name
+
+
 @app.route("/import/")
 def import_view(request):
     from django.shortcuts import redirect, render
 
     if request.method == "POST" and request.FILES.get("xlsx"):
-        import tempfile
-
         from xlsx_parser import parse_sellable_xlsx
 
-        f = request.FILES["xlsx"]
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
-            for chunk in f.chunks():
-                tmp.write(chunk)
-            tmp_path = tmp.name
-
+        tmp_path = _save_upload_to_tmp(request.FILES["xlsx"])
         mode = request.POST.get("mode", "overwrite")
         import_lots(parse_sellable_xlsx(tmp_path), mode=mode)
 
         return redirect("/")
 
+    if request.method == "POST" and request.FILES.get("gl_xlsx"):
+        from gl_parser import parse_gains_losses_xlsx
+
+        tmp_path = _save_upload_to_tmp(request.FILES["gl_xlsx"])
+        mode = request.POST.get("gl_mode", "overwrite")
+        year = _parse_tax_year(request.POST.get("year"), _gl_year_options(), _gl_default_year())
+        import_gains_losses(parse_gains_losses_xlsx(tmp_path), mode=mode, year=year)
+
+        return redirect(f"/tasse/?year={year}")
+
     return render(
         request,
         "import.html",
-        {"count": Lot.objects.count(), "sales": list(Sale.objects.prefetch_related("lots").all())},
+        {
+            "count": Lot.objects.count(),
+            "sales": list(Sale.objects.prefetch_related("lots").all()),
+            "gl_years": _gl_year_options(),
+            "gl_default_year": _gl_default_year(),
+        },
     )
 
 
@@ -744,6 +761,18 @@ def _parse_tax_year(raw: str | None, available_years: list[int], default: int) -
     except (TypeError, ValueError):
         return default
     return year if year in available_years else default
+
+
+def _gl_year_options() -> list[int]:
+    """Selectable tax years for the Gains & Losses import, independent of
+    existing data (unlike _tax_year_options) since the first-ever import has
+    none yet."""
+    current_year = timezone.localdate().year
+    return list(range(current_year - 6, current_year + 1))
+
+
+def _gl_default_year() -> int:
+    return timezone.localdate().year - 1
 
 
 @app.route("/tasse/")
