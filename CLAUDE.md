@@ -11,11 +11,13 @@ Local web app (single-user, no auth) for Italian equity tax simulation under **r
 ```bash
 just install       # uv sync — create/update .venv
 just run           # dev server on localhost
+just serve         # dev server + Tailwind CSS watch mode together (dekit mprocs)
 just migrate       # create DB tables (--run-syncdb, required first time)
 just ftest         # run tests (use this, not pytest directly)
 just ftest tests/test_tax_engine.py  # single test file
 just cov           # full suite with 100% coverage gate
 just lint          # pre-commit hooks on all files — run BEFORE git add
+just tailwind-build  # rebuild static/css/tailwind.css (also runs via update-assets/dist)
 ```
 
 ## Architecture
@@ -41,7 +43,12 @@ Key modules:
 
 ### Frontend
 
-Static assets are fully bundled (no CDN). Templates use **Pico CSS** + **HTMX** + **Alpine.js**, all served from `static/`. Custom styles go exclusively in `static/style.css` — never inline in templates.
+Static assets are fully bundled (no CDN). Templates use **Tailwind CSS v4 + daisyUI** (`corporate` theme) + **HTMX** + **Alpine.js**, all served from `static/`.
+
+- `frontend/source.css` is the Tailwind entry point (theme config, `@source` scan path). It's compiled via **`django-tailwind-cli`** (pure Python, no Node/npm) to `static/css/tailwind.css`, loaded in `base.html` via `{% load tailwind_cli %}{% tailwind_css %}`.
+- `just tailwind-build` (or `just serve`, which also runs the dev server) recompiles it; `update-assets` and `dist` depend on it so the committed/shipped stylesheet is always current.
+- `static/css/custom.css` is the escape hatch for the handful of things with no Tailwind/daisyUI equivalent (the `@font-face` declarations, `[x-cloak]`, the htmx-settling KPI-card flash animation) — never add component styling there; reach for Tailwind utilities/daisyUI components in templates instead.
+- Colors are plain Tailwind palette utilities (`text-emerald-600`, `bg-purple-50`, etc.) or daisyUI semantic tokens (`text-success`, `alert-error`) — never hand-picked hex.
 
 ### Testing patterns
 

@@ -2,21 +2,25 @@
 {% block title %}Novità — Etrade Portfolio{% endblock %}
 {% block content %}
 
-<h2>Novità e aggiornamenti</h2>
-<p class="releases-subtitle">Un riepilogo di cosa è cambiato a ogni versione dell'app.</p>
+<h2 class="text-2xl font-bold tracking-tight mb-1">Novità e aggiornamenti</h2>
+<p class="text-sm text-base-content/60 mb-6">Un riepilogo di cosa è cambiato a ogni versione dell'app.</p>
 
-<ol class="releases-list">
-  {% for release in releases %}
-  <li class="releases-item">
-    <div class="releases-item-header">
-      <span class="releases-version-badge">v{{ release.version }}</span>
-      <time datetime="{{ release.date|date:'Y-m-d' }}" class="releases-date">{{ release.date|date:"j F Y" }}</time>
-    </div>
-    <ul class="releases-notes">
-      {% for note in release.notes %}<li>{{ note }}</li>{% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ol>
+<div class="card bg-base-100 border border-base-300 max-w-5xl mx-auto">
+  <div class="card-body">
+  <ol class="flex flex-col gap-6">
+    {% for release in releases %}
+    <li class="border-b border-base-300 pb-6 last:border-0 last:pb-0">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="badge badge-neutral badge-lg rounded-full">v{{ release.version }}</span>
+        <time datetime="{{ release.date|date:'Y-m-d' }}" class="text-sm text-base-content/60">{{ release.date|date:"j F Y" }}</time>
+      </div>
+      <ul class="list-disc list-outside pl-5 space-y-3 leading-relaxed text-sm">
+        {% for note in release.notes %}<li>{{ note }}</li>{% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ol>
+  </div>
+</div>
 
 {% endblock %}
