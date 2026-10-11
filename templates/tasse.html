@@ -219,8 +219,10 @@
 
 <h4 class="text-lg font-bold tracking-tight mb-1">Esempio compilazione Quadro RT — Modello Redditi PF/{{ year|add:1 }}</h4>
 <p class="text-sm text-base-content/60 mb-4">
-  A differenza del Quadro RW (una riga per detenzione), il Quadro RT — Sezione II-A si compila
-  con un unico calcolo aggregato per l'intero anno: i righi RT21-RT27 sommano tutte le vendite {{ year }}.
+  Le azioni AAPL sono una partecipazione <strong>non qualificata</strong>: si compila la Sezione II-A.
+  A differenza del Quadro RW (una riga per detenzione), senza rideterminazione/affrancamento del costo
+  il rigo RT11 è <strong>un unico totale aggregato</strong> di tutte le vendite {{ year }} (il "rigo per
+  singola cessione" previsto dalle istruzioni si applica solo a chi ha rideterminato il costo).
 </p>
 
 <div class="card bg-base-100 border border-base-300 overflow-hidden mb-6 max-w-3xl mx-auto">
@@ -235,33 +237,38 @@
   </thead>
   <tbody>
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-center">RT21</td>
+    <td class="text-center">RT11, col. 1</td>
     <td>Corrispettivi</td>
     <td class="text-right">€{{ sales_totals.gross_proceeds_eur|floatformat:2 }}</td>
   </tr>
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-center">RT22, col. 3</td>
+    <td class="text-center">RT11, col. 2</td>
     <td>Costo fiscalmente riconosciuto</td>
     <td class="text-right">€{{ sales_totals.cost_basis_eur|floatformat:2 }}</td>
   </tr>
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-center">RT23, col. 2</td>
-    <td>Plusvalenza (RT21 − RT22)</td>
+    <td class="text-center">RT52, col. 2</td>
+    <td>Plusvalenza (RT11.1 − RT11.2)</td>
     <td class="text-right">€{{ sales_totals.net_gain_eur|floatformat:2 }}</td>
   </tr>
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-center">RT24</td>
-    <td>Minusvalenze pregresse compensate</td>
+    <td class="text-center">RT71 / RT14</td>
+    <td>Minusvalenze da compensare</td>
     <td class="text-right"><span class="text-base-content/40">non gestite dall'app</span></td>
   </tr>
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-center">RT26</td>
-    <td>Plusvalenza imponibile (RT23 − RT24)</td>
+    <td class="text-center">RT72</td>
+    <td>Plusvalenza netta imponibile (RT52.2 − RT71 − RT14.2)</td>
     <td class="text-right">€{{ sales_totals.net_gain_eur|floatformat:2 }}</td>
   </tr>
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-center">RT27</td>
-    <td>Imposta sostitutiva 26% (RT26 × 26%)</td>
+    <td class="text-center">RT73</td>
+    <td>Imposta sostitutiva 26% (RT72 × 26%)</td>
+    <td class="text-right">€{{ sales_totals.tax_eur|floatformat:2 }}</td>
+  </tr>
+  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+    <td class="text-center">RT74</td>
+    <td>Imposta dovuta (RT73 − RT15)</td>
     <td class="text-right">€{{ sales_totals.tax_eur|floatformat:2 }}</td>
   </tr>
   </tbody>
@@ -270,16 +277,18 @@
 </div>
 
 <div class="text-sm text-base-content/70">
-  <p class="font-semibold mb-2">Note Quadro RT:</p>
+  <p class="font-semibold mb-2">Note Quadro RT — Sezione II-A:</p>
   <ul class="list-disc list-inside space-y-1 mb-3">
-    <li><strong>RT21 – Corrispettivi:</strong> somma dei corrispettivi di tutte le vendite dell'anno</li>
-    <li><strong>RT22, col. 3 – Costo fiscalmente riconosciuto:</strong> corrispettivi − plusvalenza</li>
-    <li><strong>RT23, col. 2 – Plusvalenza:</strong> RT21 − RT22</li>
-    <li><strong>RT24 – Minusvalenze pregresse compensate:</strong> non gestite da questa app; se nel quadro RT di anni precedenti risultano minusvalenze non ancora compensate, vanno riportate qui e sottratte dalla plusvalenza dell'anno</li>
-    <li><strong>RT26 – Plusvalenza imponibile:</strong> RT23 − RT24 (= RT23 se non ci sono minusvalenze pregresse)</li>
-    <li><strong>RT27 – Imposta sostitutiva 26%:</strong> RT26 × 26%</li>
+    <li><strong>RT11, col. 1 – Corrispettivi:</strong> totale dei corrispettivi di tutte le cessioni di partecipazioni non qualificate dell'anno</li>
+    <li><strong>RT11, col. 2 – Costo fiscalmente riconosciuto:</strong> totale costo/valore di acquisto delle stesse cessioni</li>
+    <li><strong>RT52, col. 2 – Plusvalenza:</strong> RT11.1 − RT11.2, se positiva</li>
+    <li><strong>RT71 / RT14 – Minusvalenze da compensare:</strong> non gestite da questa app; eventuali minusvalenze pregresse (sezione I/III dello stesso quadro, o quadro RT di anni precedenti) vanno riportate qui e sottratte dalla plusvalenza</li>
+    <li><strong>RT72 – Plusvalenza netta imponibile:</strong> RT52, col. 2 − RT71, col. 3 − RT14, col. 2</li>
+    <li><strong>RT73 – Imposta sostitutiva:</strong> 26% × RT72</li>
+    <li><strong>RT74 – Imposta dovuta:</strong> RT73 − RT15 (eccedenza d'imposta sostitutiva da dichiarazioni precedenti, se presente)</li>
+    <li>Il rigo RT12 (un rigo per ogni singola cessione) si usa solo per le cessioni con rideterminazione/affrancamento del costo — non il caso tipico di un piano ESPP/RSU</li>
   </ul>
-  <p class="text-xs text-base-content/50">⚠ Importi convertiti in euro al cambio storico Banca d'Italia della rispettiva data di vendita. Verificare sempre le istruzioni ufficiali del modello Redditi PF per l'anno di presentazione, in particolare per eventuali minusvalenze pregresse da compensare (RT24) non gestite da questa app.</p>
+  <p class="text-xs text-base-content/50">⚠ Importi convertiti in euro al cambio storico Banca d'Italia della rispettiva data di vendita. Verificare sempre le istruzioni ufficiali del modello Redditi PF per l'anno di presentazione, in particolare per eventuali minusvalenze pregresse da compensare (RT71/RT14) non gestite da questa app.</p>
 </div>
 
 {% endif %}
