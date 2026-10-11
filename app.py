@@ -937,8 +937,8 @@ def tasse_view(request):
         )
 
         # The per-lot IVAFE detail table reuses the same grouping as the Quadro RW
-        # example above: Tipo/Acquisto only have a single value on rows that still
-        # tie back to one lot — grouped rows show "—" for both.
+        # example above: Acquisto only has a single value on rows that still tie
+        # back to one lot — grouped rows show "n/d" instead. Sorted by days held.
         detail_rows = []
         if rw_full_year:
             detail_rows.append(
@@ -948,17 +948,15 @@ def tasse_view(request):
                     "value_end_eur": rw_full_year["value_end_eur"],
                     "days_held": rw_full_year["days_held"],
                     "ivafe_eur": rw_full_year["ivafe_eur"],
-                    "plan_type": None,
                     "date_acquired": None,
                 }
             )
         for r in rw_partial_rows:
             if "lot" in r:
-                detail_rows.append(
-                    {**r, "plan_type": r["lot"].plan_type, "date_acquired": r["lot"].date_acquired}
-                )
+                detail_rows.append({**r, "date_acquired": r["lot"].date_acquired})
             else:
-                detail_rows.append({**r, "plan_type": None, "date_acquired": None})
+                detail_rows.append({**r, "date_acquired": None})
+        detail_rows.sort(key=lambda r: r["days_held"], reverse=True)
 
         ctx.update(
             {
