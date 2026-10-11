@@ -11,6 +11,16 @@ from django.http import HttpRequest
 
 RELEASES: list[dict] = [
     {
+        "version": "2026.2",
+        "date": date(2026, 10, 11),
+        "notes": [
+            "Veste grafica completamente rinnovata (nuovo stile per tutte le pagine), con qualche piccolo bug di allineamento in meno sui controlli di vendita.",
+            "Il calcolo dell'IVAFE ora include anche le azioni vendute durante l'anno, non solo quelle ancora in portafoglio: prima venivano escluse per errore.",
+            "Aggiunto un esempio guidato per compilare il Quadro RT (plusvalenze) nella dichiarazione dei redditi, oltre a quello già esistente per il Quadro RW.",
+            "Lo storico vendite (in dashboard e nelle impostazioni) ora è paginato invece di mostrare solo le ultime 10 voci.",
+        ],
+    },
+    {
         "version": "2026.1",
         "date": date(2026, 10, 9),
         "notes": [
