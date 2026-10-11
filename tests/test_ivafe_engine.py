@@ -141,6 +141,17 @@ class TestCalculateIvafe:
 
 
 class TestCalculateIvafeSoldLots:
+    def test_sold_lot_acquired_after_its_own_disposal_date_is_excluded(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 3, 1), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2025, 6, 15), 10, sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        assert result["rows"] == []
+        assert result["total_ivafe_eur"] == Decimal("0")
+
     def test_sold_lot_days_held_run_to_sale_date(self):
         from ivafe_engine import calculate_ivafe
 
