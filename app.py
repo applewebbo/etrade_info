@@ -564,6 +564,7 @@ def _save_upload_to_tmp(f) -> str:
 
 @app.route("/import/")
 def import_view(request):
+    from django.core.paginator import Paginator
     from django.shortcuts import redirect, render
 
     if request.method == "POST" and request.FILES.get("xlsx"):
@@ -585,12 +586,13 @@ def import_view(request):
 
         return redirect(f"/tasse/?year={year}")
 
+    paginator = Paginator(Sale.objects.prefetch_related("lots").all(), 10)
     return render(
         request,
         "import.html",
         {
             "count": Lot.objects.count(),
-            "sales": list(Sale.objects.prefetch_related("lots").all()),
+            "sales": paginator.get_page(request.GET.get("page")),
             "gl_years": _gl_year_options(),
             "gl_default_year": _gl_default_year(),
         },
