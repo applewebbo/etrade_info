@@ -520,12 +520,14 @@ def _portfolio_context():
 
 @app.route("/")
 def dashboard(request):
+    from django.core.paginator import Paginator
     from django.shortcuts import render
 
     has_lots = Lot.objects.exists()
-    sales = list(Sale.objects.prefetch_related("lots").all()[:10])
+    paginator = Paginator(Sale.objects.prefetch_related("lots").all(), 10)
+    sales_page = paginator.get_page(request.GET.get("page"))
     ctx = _portfolio_context() if has_lots else {"has_lots": False}
-    ctx["sales"] = sales
+    ctx["sales"] = sales_page
     return render(request, "dashboard.html", ctx)
 
 

@@ -181,5 +181,24 @@
 </div>
 {% endfor %}
 </div>
+
+{% if sales.paginator.num_pages > 1 %}
+<div class="flex justify-center mt-6">
+  <div class="join">
+    {% if sales.has_previous %}
+    <a href="{% querystring page=sales.previous_page_number %}" class="btn btn-sm join-item">«</a>
+    {% else %}
+    <button type="button" class="btn btn-sm join-item btn-disabled">«</button>
+    {% endif %}
+    <button type="button" class="btn btn-sm join-item btn-disabled">Pagina {{ sales.number }} di {{ sales.paginator.num_pages }}</button>
+    {% if sales.has_next %}
+    <a href="{% querystring page=sales.next_page_number %}" class="btn btn-sm join-item">»</a>
+    {% else %}
+    <button type="button" class="btn btn-sm join-item btn-disabled">»</button>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
 {% endif %}
 {% endblock %}

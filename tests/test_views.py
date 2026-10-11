@@ -337,6 +337,33 @@ class TestDashboardSales:
         assert response.status_code == 200
         assert b"Vendite effettuate" not in response.content
 
+    def test_dashboard_paginates_sales_beyond_first_page(self, client):
+        from app import Sale
+
+        for i in range(11):
+            Sale.objects.create(
+                **{
+                    **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+                    "sale_date": date(2025, 1, i + 1),
+                }
+            )
+
+        response = client.get("/")
+        assert response.status_code == 200
+        assert b"Pagina 1 di 2" in response.content
+
+        response = client.get("/?page=2")
+        assert response.status_code == 200
+        assert b"Pagina 2 di 2" in response.content
+
+    def test_dashboard_no_pagination_controls_within_single_page(self, client):
+        from app import Sale
+
+        Sale.objects.create(**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()})
+        response = client.get("/")
+        assert response.status_code == 200
+        assert b"Pagina 1 di 1" not in response.content
+
 
 @pytest.mark.django_db
 class TestImportViewSales:
