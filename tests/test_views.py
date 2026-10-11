@@ -1012,6 +1012,24 @@ class TestQuadroVenditeSection:
         assert response.status_code == 200
         assert b"Nessuna vendita" in response.content
 
+    def test_quadro_rt_notes_show_computed_cost_basis(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(
+            **{
+                **SALE_DEFAULTS,
+                "sale_date": date(2025, 6, 15),
+                "gross_proceeds_usd": Decimal("3000.00000"),
+                "net_gain_usd": Decimal("1200.00000"),
+            }
+        )
+        SaleLot.objects.create(sale=sale, **SALE_LOT_DEFAULTS)
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"Note Quadro RT" in response.content
+        assert b"1636,36" in response.content  # cost basis EUR: (3000-1200)/1.1
+
 
 @pytest.mark.django_db
 class TestReleasesView:

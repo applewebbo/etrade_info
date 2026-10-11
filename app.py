@@ -110,6 +110,10 @@ class Sale(models.Model):
         return self.net_gain_usd / self.eur_usd_rate
 
     @property
+    def cost_basis_eur(self):
+        return self.gross_proceeds_eur - self.net_gain_eur
+
+    @property
     def total_qty(self):
         return sum(sl.qty_sold for sl in self.lots.all())
 
@@ -858,6 +862,7 @@ def tasse_view(request):
         {
             "qty": sum(s.total_qty for s in sales),
             "gross_proceeds_eur": sum(s.gross_proceeds_eur for s in sales),
+            "cost_basis_eur": sum(s.cost_basis_eur for s in sales),
             "net_gain_eur": sum(s.net_gain_eur for s in sales),
             "tax_eur": sum(s.tax_eur for s in sales),
         }
