@@ -935,6 +935,31 @@ def tasse_view(request):
             if full_rows
             else None
         )
+
+        # The per-lot IVAFE detail table reuses the same grouping as the Quadro RW
+        # example above: Tipo/Acquisto only have a single value on rows that still
+        # tie back to one lot — grouped rows show "—" for both.
+        detail_rows = []
+        if rw_full_year:
+            detail_rows.append(
+                {
+                    "qty": rw_full_year["total_qty"],
+                    "value_start_eur": rw_full_year["value_start_eur"],
+                    "value_end_eur": rw_full_year["value_end_eur"],
+                    "days_held": rw_full_year["days_held"],
+                    "ivafe_eur": rw_full_year["ivafe_eur"],
+                    "plan_type": None,
+                    "date_acquired": None,
+                }
+            )
+        for r in rw_partial_rows:
+            if "lot" in r:
+                detail_rows.append(
+                    {**r, "plan_type": r["lot"].plan_type, "date_acquired": r["lot"].date_acquired}
+                )
+            else:
+                detail_rows.append({**r, "plan_type": None, "date_acquired": None})
+
         ctx.update(
             {
                 "price_start": price_start,
@@ -943,6 +968,7 @@ def tasse_view(request):
                 "rate_end": rate_end,
                 "rw_full_year": rw_full_year,
                 "rw_partial_rows": rw_partial_rows,
+                "detail_rows": detail_rows,
                 **ivafe_data,
             }
         )

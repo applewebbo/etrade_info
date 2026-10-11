@@ -846,6 +846,19 @@ class TestTasseView:
         response = client.get("/tasse/")
         assert response.status_code == 200
 
+    def test_detail_table_groups_full_year_lots_into_one_dashed_row(self, client, mock_ivafe_data):
+        from app import Lot
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        Lot.objects.create(**{**LOT_DEFAULTS, "plan_type": "RSU", "symbol": "AAPL"})
+        response = client.get("/tasse/")
+        assert response.status_code == 200
+        # both full-year lots collapse into one detail row with qty 20 (10+10),
+        # so the per-type plan_type text should not appear as a row label.
+        assert response.content.count(b">ESPP<") == 0
+        assert response.content.count(b">RSU<") == 0
+        assert b">20<" in response.content  # combined qty: 10 + 10
+
     def test_page_handles_empty_price_dataframe(self, client, monkeypatch):
         import bdi_rates
 

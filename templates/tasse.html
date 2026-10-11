@@ -78,10 +78,10 @@
     </tr>
   </thead>
   <tbody>
-  {% for row in rows %}
+  {% for row in detail_rows %}
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-center">{{ row.lot.plan_type }}</td>
-    <td class="text-center">{{ row.lot.date_acquired|date:"d/m/Y" }}</td>
+    <td class="text-center">{% if row.plan_type %}{{ row.plan_type }}{% else %}<span class="text-base-content/40">—</span>{% endif %}</td>
+    <td class="text-center">{% if row.date_acquired %}{{ row.date_acquired|date:"d/m/Y" }}{% else %}<span class="text-base-content/40">—</span>{% endif %}</td>
     <td class="text-right">{{ row.qty|floatformat:"-4" }}</td>
     <td class="text-right">{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="text-base-content/40">—</span>{% endif %}</td>
     <td class="text-right">€{{ row.value_end_eur|floatformat:2 }}</td>
