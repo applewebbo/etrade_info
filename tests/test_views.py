@@ -1032,6 +1032,71 @@ class TestQuadroVenditeSection:
 
 
 @pytest.mark.django_db
+class TestTasseIvafeSoldLots:
+    def test_sold_lot_included_without_current_lots(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2025, 6, 15)})
+        SaleLot.objects.create(sale=sale, **SALE_LOT_DEFAULTS)
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"nessun lotto" not in response.content.lower()
+        assert (
+            b"2200,00" in response.content
+        )  # value_end_eur: 200 (sale price) * 10 * 1.1 (eur_usd_rate)
+
+    def test_old_disclaimer_about_sold_lots_is_removed(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2025, 6, 15)})
+        SaleLot.objects.create(sale=sale, **SALE_LOT_DEFAULTS)
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert b"lotti attualmente presenti nel database" not in response.content
+
+    def test_sold_lot_outside_selected_year_is_excluded(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2024, 6, 15)})
+        SaleLot.objects.create(sale=sale, **SALE_LOT_DEFAULTS)
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"Nessun lotto" in response.content
+
+    def test_sold_lot_and_current_lot_both_contribute(self, client, mock_ivafe_data):
+        from app import Lot, Sale, SaleLot
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        sale = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2025, 6, 15)})
+        SaleLot.objects.create(sale=sale, **SALE_LOT_DEFAULTS)
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        assert b"nessun lotto" not in response.content.lower()
+
+    def test_sold_lots_from_same_sale_acquired_before_year_are_grouped(
+        self, client, mock_ivafe_data
+    ):
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(**{**SALE_DEFAULTS, "sale_date": date(2025, 6, 15)})
+        SaleLot.objects.create(
+            sale=sale, **{**SALE_LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)}
+        )
+        SaleLot.objects.create(
+            sale=sale, **{**SALE_LOT_DEFAULTS, "date_acquired": date(2021, 1, 1)}
+        )
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        # combined value_end_eur for 20 shares (10+10): 200 * 20 * 1.1, grouped into one row
+        # in the Quadro RW table (the per-lot detail table above stays ungrouped).
+        assert b"4400,00" in response.content
+
+
+@pytest.mark.django_db
 class TestReleasesView:
     def test_page_renders(self, client):
         response = client.get("/novita/")

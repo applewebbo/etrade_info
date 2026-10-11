@@ -12,6 +12,20 @@ class FakeLot:
         self.tax_status = "Long Term"
 
 
+class FakeSale:
+    def __init__(self, sale_date, sale_price_usd, eur_usd_rate):
+        self.sale_date = sale_date
+        self.sale_price_usd = sale_price_usd
+        self.eur_usd_rate = eur_usd_rate
+
+
+class FakeSaleLot:
+    def __init__(self, date_acquired, qty_sold, sale):
+        self.date_acquired = date_acquired
+        self.qty_sold = Decimal(str(qty_sold))
+        self.sale = sale
+
+
 RATE_START = Decimal("0.9689")  # EUR per 1 USD, Jan 2 2025
 RATE_END = Decimal("0.8511")  # EUR per 1 USD, Dec 31 2025
 PRICE_START = Decimal("242.30")
@@ -110,3 +124,105 @@ class TestCalculateIvafe:
         assert result["total_ivafe_eur"] == Decimal("0")
         assert result["total_value_start_eur"] == Decimal("0")
         assert result["total_value_end_eur"] == Decimal("0")
+
+    def test_held_lot_row_includes_qty(self):
+        from ivafe_engine import calculate_ivafe
+
+        lot = FakeLot(datetime.date(2022, 5, 15), 10)
+        result = calculate_ivafe([lot], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR)
+        assert result["rows"][0]["qty"] == Decimal("10")
+
+    def test_held_lot_row_is_not_marked_sold(self):
+        from ivafe_engine import calculate_ivafe
+
+        lot = FakeLot(datetime.date(2022, 5, 15), 10)
+        result = calculate_ivafe([lot], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR)
+        assert result["rows"][0]["sold"] is False
+
+
+class TestCalculateIvafeSoldLots:
+    def test_sold_lot_days_held_run_to_sale_date(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 6, 15), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2022, 1, 1), 10, sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        days = (datetime.date(2025, 6, 15) - datetime.date(2025, 1, 1)).days + 1
+        assert result["rows"][0]["days_held"] == days
+
+    def test_sold_lot_value_end_uses_historical_sale_price_and_rate(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 6, 15), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2022, 1, 1), 10, sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        expected_value_end_eur = Decimal("10") * Decimal("250.00") * Decimal("0.90")
+        assert result["rows"][0]["value_end_eur"] == expected_value_end_eur
+
+    def test_sold_lot_acquired_before_year_contributes_to_total_value_start(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 6, 15), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2022, 1, 1), 10, sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        expected = Decimal("10") * PRICE_START * RATE_START
+        assert result["total_value_start_eur"] == expected
+
+    def test_sold_lot_acquired_during_year_has_no_start_value(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 9, 1), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2025, 3, 1), 10, sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        assert result["rows"][0]["value_start_eur"] is None
+        assert result["total_value_start_eur"] == Decimal("0")
+
+    def test_sold_lot_does_not_contribute_to_total_value_end(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 6, 15), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2022, 1, 1), 10, sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        assert result["total_value_end_eur"] == Decimal("0")
+
+    def test_sold_lot_ivafe_added_to_total_alongside_held_lots(self):
+        from ivafe_engine import calculate_ivafe
+
+        held = FakeLot(datetime.date(2022, 5, 15), 10)
+        sale = FakeSale(datetime.date(2025, 6, 15), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2022, 1, 1), 5, sale)
+        result = calculate_ivafe(
+            [held], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        assert len(result["rows"]) == 2
+        assert result["total_ivafe_eur"] > Decimal("0")
+
+    def test_sold_lot_row_qty_is_qty_sold(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 6, 15), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2022, 1, 1), Decimal("7.5"), sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        assert result["rows"][0]["qty"] == Decimal("7.5")
+
+    def test_sold_lot_row_is_marked_sold(self):
+        from ivafe_engine import calculate_ivafe
+
+        sale = FakeSale(datetime.date(2025, 6, 15), Decimal("250.00"), Decimal("0.90"))
+        sold = FakeSaleLot(datetime.date(2022, 1, 1), 10, sale)
+        result = calculate_ivafe(
+            [], PRICE_START, PRICE_END, RATE_START, RATE_END, YEAR, sold_lots=[sold]
+        )
+        assert result["rows"][0]["sold"] is True

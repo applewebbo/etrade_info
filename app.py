@@ -813,6 +813,7 @@ def _gl_default_year() -> int:
 
 @app.route("/tasse/")
 def tasse_view(request):
+    import calendar
     import datetime
 
     import yfinance as yf
@@ -870,31 +871,65 @@ def tasse_view(request):
         else None
     )
 
+    sold_lots = list(SaleLot.objects.filter(sale__sale_date__year=year).select_related("sale"))
+
     ctx = {
         "year": year,
         "available_years": available_years,
-        "has_lots": bool(lots),
+        "has_lots": bool(lots) or bool(sold_lots),
         "data_available": data_available,
         "is_in_progress_year": is_in_progress_year,
         "sales": sales,
         "sales_totals": sales_totals,
     }
-    if data_available and lots:
-        ivafe_data = calculate_ivafe(lots, price_start, price_end, rate_start, rate_end, year)
+    if data_available and (lots or sold_lots):
+        ivafe_data = calculate_ivafe(
+            lots, price_start, price_end, rate_start, rate_end, year, sold_lots=sold_lots
+        )
         rows = ivafe_data["rows"]
-        full_rows = [r for r in rows if r["value_start_eur"] is not None]
-        partial_rows = [r for r in rows if r["value_start_eur"] is None]
+        year_start = datetime.date(year, 1, 1)
+        year_length = 366 if calendar.isleap(year) else 365
+        full_rows = [r for r in rows if r["days_held"] == year_length]
+        partial_rows = [r for r in rows if r["days_held"] != year_length]
         for r in partial_rows:
-            rate_acq = get_bdi_eur_usd_rate(r["lot"].date_acquired)
-            r["value_start_eur"] = (
-                r["lot"].cost_basis * r["lot"].sellable_qty * rate_acq if rate_acq else None
+            if r["value_start_eur"] is None:
+                rate_acq = get_bdi_eur_usd_rate(r["lot"].date_acquired)
+                r["value_start_eur"] = (
+                    r["lot"].cost_basis * r["qty"] * rate_acq if rate_acq else None
+                )
+
+        # Lots acquired before the year and sold during it all share the same
+        # days-held (Jan 1 -> sale date) regardless of their original acquisition
+        # date or ESPP/RSU type, so group them by sale date for the Quadro RW
+        # example — mirrors how full-year holdings are grouped into rw_full_year.
+        groupable = [r for r in partial_rows if r["sold"] and r["lot"].date_acquired < year_start]
+        rw_partial_rows = [
+            r for r in partial_rows if not (r["sold"] and r["lot"].date_acquired < year_start)
+        ]
+        grouped_by_sale_date: dict[datetime.date, dict] = {}
+        for r in groupable:
+            group = grouped_by_sale_date.setdefault(
+                r["lot"].sale.sale_date,
+                {
+                    "qty": Decimal("0"),
+                    "value_start_eur": Decimal("0"),
+                    "value_end_eur": Decimal("0"),
+                    "days_held": r["days_held"],
+                    "ivafe_eur": Decimal("0"),
+                },
             )
+            group["qty"] += r["qty"]
+            group["value_start_eur"] += r["value_start_eur"]
+            group["value_end_eur"] += r["value_end_eur"]
+            group["ivafe_eur"] += r["ivafe_eur"]
+        rw_partial_rows += list(grouped_by_sale_date.values())
+
         rw_full_year = (
             {
-                "total_qty": sum(r["lot"].sellable_qty for r in full_rows),
+                "total_qty": sum(r["qty"] for r in full_rows),
                 "value_start_eur": sum(r["value_start_eur"] for r in full_rows),
                 "value_end_eur": sum(r["value_end_eur"] for r in full_rows),
-                "days_held": 365,
+                "days_held": year_length,
                 "ivafe_eur": sum(r["ivafe_eur"] for r in full_rows),
             }
             if full_rows
@@ -907,7 +942,7 @@ def tasse_view(request):
                 "rate_start": rate_start,
                 "rate_end": rate_end,
                 "rw_full_year": rw_full_year,
-                "rw_partial_rows": partial_rows,
+                "rw_partial_rows": rw_partial_rows,
                 **ivafe_data,
             }
         )

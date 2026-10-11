@@ -82,7 +82,7 @@
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
     <td class="text-center">{{ row.lot.plan_type }}</td>
     <td class="text-center">{{ row.lot.date_acquired|date:"d/m/Y" }}</td>
-    <td class="text-right">{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
+    <td class="text-right">{{ row.qty|floatformat:"-4" }}</td>
     <td class="text-right">{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="text-base-content/40">—</span>{% endif %}</td>
     <td class="text-right">€{{ row.value_end_eur|floatformat:2 }}</td>
     <td class="text-right">{{ row.days_held }}</td>
@@ -119,13 +119,13 @@
     <td class="text-right">{{ rw_full_year.total_qty|floatformat:"-4" }}</td>
     <td class="text-right">€{{ rw_full_year.value_start_eur|floatformat:2 }}</td>
     <td class="text-right">€{{ rw_full_year.value_end_eur|floatformat:2 }}</td>
-    <td class="text-right">365</td>
+    <td class="text-right">{{ rw_full_year.days_held }}</td>
     <td class="text-right">€{{ rw_full_year.ivafe_eur|floatformat:2 }}</td>
   </tr>
   {% endif %}
   {% for row in rw_partial_rows %}
   <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
-    <td class="text-right">{{ row.lot.sellable_qty|floatformat:"-4" }}</td>
+    <td class="text-right">{{ row.qty|floatformat:"-4" }}</td>
     <td class="text-right">{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="text-base-content/40">N/D</span>{% endif %}</td>
     <td class="text-right">€{{ row.value_end_eur|floatformat:2 }}</td>
     <td class="text-right">{{ row.days_held }}</td>
@@ -147,12 +147,12 @@
     <li><strong>Col. 4 – Paese:</strong> 069 = Stati Uniti d'America</li>
     <li><strong>Col. 5 – Criterio valorizzazione:</strong> 1 = valore di mercato (per titoli quotati su mercati regolamentati)</li>
     <li><strong>Col. 6 – Valore iniziale:</strong> valore al 1° gennaio {{ year }} (o alla data di acquisto se acquisito durante l'anno), in euro al cambio Banca d'Italia del giorno</li>
-    <li><strong>Col. 7 – Valore finale:</strong> valore al 31 dicembre {{ year }}, in euro al cambio Banca d'Italia (€/$ {{ rate_end|floatformat:4 }})</li>
-    <li><strong>Col. 8 – Giorni:</strong> numero di giorni di detenzione nell'anno</li>
+    <li><strong>Col. 7 – Valore finale:</strong> valore al 31 dicembre {{ year }}, in euro al cambio Banca d'Italia (€/$ {{ rate_end|floatformat:4 }}); per i lotti venduti durante l'anno è invece il valore di vendita (prezzo × quantità, cambio storico alla data di vendita)</li>
+    <li><strong>Col. 8 – Giorni:</strong> numero di giorni di detenzione nell'anno; per i lotti venduti durante l'anno, fino alla data di vendita</li>
     <li><strong>Col. 20 – IVAFE:</strong> valore finale × 0,2% × giorni / 365</li>
     <li>Per i lotti acquistati durante l'anno il valore iniziale è calcolato come costo acquisto × quantità × cambio BdI alla data di acquisto (fonte: <a href="https://tassidicambio.bancaditalia.it" target="_blank" rel="noopener" class="link">tassidicambio.bancaditalia.it</a>)</li>
+    <li>Include sia i lotti attualmente in portafoglio sia quelli venduti durante il {{ year }}, in base allo storico vendite registrato</li>
   </ul>
-  <p class="text-xs text-base-content/50">⚠ La stima è basata sui lotti attualmente presenti nel database. Lotti venduti durante il {{ year }} e rimossi non sono inclusi nel calcolo.</p>
 </div>
 
 {% endif %}
