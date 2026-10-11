@@ -10,10 +10,11 @@ default:
 # Setup
 ##########################################################################
 
-# Sync virtualenv
+# Sync virtualenv and build the (gitignored) Tailwind CSS stylesheet
 [group('setup')]
 @install:
     uv sync
+    just tailwind-build
 
 # Update all dependencies
 [group('setup')]

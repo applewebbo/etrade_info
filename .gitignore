@@ -15,3 +15,4 @@ plans/
 uploads/
 .playwright-mcp/
 .django_tailwind_cli/
+static/css/tailwind.css
