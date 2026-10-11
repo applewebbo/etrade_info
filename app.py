@@ -923,6 +923,7 @@ def tasse_view(request):
             group["value_end_eur"] += r["value_end_eur"]
             group["ivafe_eur"] += r["ivafe_eur"]
         rw_partial_rows += list(grouped_by_sale_date.values())
+        rw_partial_rows.sort(key=lambda r: r["days_held"], reverse=True)
 
         rw_full_year = (
             {
