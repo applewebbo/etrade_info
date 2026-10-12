@@ -860,7 +860,10 @@ def tasse_view(request):
         from prices import get_eur_usd_rate, get_stock_price_usd
 
         price_end = get_stock_price_usd()
-        rate_end = get_eur_usd_rate()
+        live_rate = get_eur_usd_rate()
+        # calculate_ivafe expects EUR per 1 USD (Banca d'Italia convention);
+        # the live rate is USD per 1 EUR, so it must be inverted.
+        rate_end = Decimal("1") / live_rate if live_rate else None
     else:
         price_end = _aapl_price(datetime.date(year, 12, 24), datetime.date(year, 12, 31), -1)
         rate_end = get_bdi_eur_usd_rate(datetime.date(year, 12, 31))

@@ -967,6 +967,21 @@ class TestTasseInProgressYearPreview:
         assert response.status_code == 200
         assert b"provvisori" not in response.content.lower()
 
+    def test_current_year_ivafe_inverts_live_rate_to_eur_per_usd(
+        self, client, mock_ivafe_data, mock_prices, monkeypatch
+    ):
+        import prices
+        from app import Lot
+
+        # Live rate is USD per 1 EUR; calculate_ivafe needs EUR per 1 USD
+        # (the same convention Banca d'Italia's historical rate uses), so
+        # 1.25 USD/EUR must become 0.8 EUR/USD, not be used as-is.
+        monkeypatch.setattr(prices, "get_eur_usd_rate", lambda: Decimal("1.25000"))
+        Lot.objects.create(**{**LOT_DEFAULTS, "date_acquired": date(2020, 1, 1)})
+        response = client.get("/tasse/", {"year": 2026})
+        assert response.status_code == 200
+        assert b"0,8000" in response.content
+
 
 SALE_DEFAULTS = dict(
     sale_price_usd=Decimal("200.00000"),
