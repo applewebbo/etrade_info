@@ -60,11 +60,6 @@ fresh: clean install
 # Development
 ##########################################################################
 
-# Run the local development server
-[group('development')]
-@run:
-    uv run python app.py runserver
-
 # Run dev server + Tailwind CSS watch mode together (auto-rebuild on template changes)
 [group('development')]
 @serve:

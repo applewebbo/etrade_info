@@ -10,7 +10,6 @@ Local web app (single-user, no auth) for Italian equity tax simulation under **r
 
 ```bash
 just install       # uv sync — create/update .venv
-just run           # dev server on localhost
 just serve         # dev server + Tailwind CSS watch mode together (dekit mprocs)
 just migrate       # create DB tables (--run-syncdb, required first time)
 just ftest         # run tests (use this, not pytest directly)
