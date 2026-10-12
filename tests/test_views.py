@@ -1025,6 +1025,42 @@ class TestQuadroVenditeSection:
         assert response.status_code == 200
         assert b"Nessuna vendita" in response.content
 
+    def test_rt73_tax_nets_losses_against_gains_across_sales(self, client, mock_ivafe_data):
+        from app import Sale, SaleLot
+
+        gain_sale = Sale.objects.create(
+            **{
+                **SALE_DEFAULTS,
+                "sale_date": date(2025, 3, 1),
+                "gross_proceeds_usd": Decimal("3000.00000"),
+                "net_gain_usd": Decimal("1000.00000"),
+                "tax_usd": Decimal("260.00000"),
+                "eur_usd_rate": Decimal("1.000000"),
+            }
+        )
+        SaleLot.objects.create(sale=gain_sale, **SALE_LOT_DEFAULTS)
+        loss_sale = Sale.objects.create(
+            **{
+                **SALE_DEFAULTS,
+                "sale_date": date(2025, 9, 1),
+                "gross_proceeds_usd": Decimal("1000.00000"),
+                "net_gain_usd": Decimal("-500.00000"),
+                "tax_usd": Decimal("0.00000"),
+                "eur_usd_rate": Decimal("1.000000"),
+            }
+        )
+        SaleLot.objects.create(
+            sale=loss_sale, **{**SALE_LOT_DEFAULTS, "gain_usd": Decimal("-500.00000")}
+        )
+
+        response = client.get("/tasse/", {"year": 2025})
+        assert response.status_code == 200
+        # Annual net gain across sales: 1000 - 500 = 500 -> RT73 = 26% x 500 = 130.
+        # Summing each sale's own (loss-clamped-to-zero) tax would wrongly give 260
+        # (the gain_sale's own stored tax_usd, legitimately still shown in its own
+        # row of the per-sale "Vendita" table above the Quadro RT summary).
+        assert b"130,00" in response.content
+
     def test_quadro_rt_notes_show_computed_cost_basis(self, client, mock_ivafe_data):
         from app import Sale, SaleLot
 

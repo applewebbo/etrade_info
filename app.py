@@ -821,6 +821,7 @@ def tasse_view(request):
 
     from bdi_rates import get_bdi_eur_usd_rate
     from ivafe_engine import calculate_ivafe
+    from tax_engine import TAX_RATE
 
     current_year = datetime.date.today().year
     default_year = current_year - 1
@@ -859,17 +860,21 @@ def tasse_view(request):
     data_available = all([price_start, price_end, rate_start, rate_end])
 
     sales = list(Sale.objects.filter(sale_date__year=year).order_by("sale_date"))
-    sales_totals = (
-        {
+    if sales:
+        net_gain_eur = sum(s.net_gain_eur for s in sales)
+        sales_totals = {
             "qty": sum(s.total_qty for s in sales),
             "gross_proceeds_eur": sum(s.gross_proceeds_eur for s in sales),
             "cost_basis_eur": sum(s.cost_basis_eur for s in sales),
-            "net_gain_eur": sum(s.net_gain_eur for s in sales),
-            "tax_eur": sum(s.tax_eur for s in sales),
+            "net_gain_eur": net_gain_eur,
+            # Quadro RT (RT73) taxes the YEAR'S aggregate net gain (RT72), not the
+            # sum of each sale's own gain-only tax — a loss on one sale must offset
+            # a gain on another within the same year, per the non-qualified
+            # substitute-tax rules.
+            "tax_eur": max(Decimal("0"), net_gain_eur) * TAX_RATE,
         }
-        if sales
-        else None
-    )
+    else:
+        sales_totals = None
 
     sold_lots = list(SaleLot.objects.filter(sale__sale_date__year=year).select_related("sale"))
 
