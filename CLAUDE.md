@@ -11,6 +11,7 @@ Local web app (single-user, no auth) for Italian equity tax simulation under **r
 ```bash
 just install       # uv sync — create/update .venv
 just serve         # dev server + Tailwind CSS watch mode together (dekit mprocs)
+just serve 8001    # same, on a different port (default 8000)
 just migrate       # create DB tables (--run-syncdb, required first time)
 just ftest         # run tests (use this, not pytest directly)
 just ftest tests/test_tax_engine.py  # single test file

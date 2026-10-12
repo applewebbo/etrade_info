@@ -1,5 +1,5 @@
 procs:
   web:
-    shell: uv run python app.py runserver
+    shell: uv run python app.py runserver ${PORT:-8000}
   tailwind:
     shell: uv run python app.py tailwind watch --noreload

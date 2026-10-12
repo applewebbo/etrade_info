@@ -62,8 +62,8 @@ fresh: clean install
 
 # Run dev server + Tailwind CSS watch mode together (auto-rebuild on template changes)
 [group('development')]
-@serve:
-    dekit mprocs -c mprocs-local.yaml
+@serve port="8000":
+    PORT={{port}} dekit mprocs -c mprocs-local.yaml
 
 # Run database migrations
 [group('development')]
