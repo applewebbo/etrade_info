@@ -320,13 +320,21 @@ def _parse_sale_date(raw: str | None) -> date:
 
 
 def _resolve_sale_rate(sale_date: date) -> "Decimal | None":
-    """Live EUR/USD rate for today's sales, Banca d'Italia historical rate otherwise."""
+    """USD per 1 EUR, matching Sale's division-based EUR conversion.
+
+    Live rate (prices.get_eur_usd_rate, from the "EURUSD=X" ticker) is already
+    USD per 1 EUR. Banca d'Italia's historical rate is the reciprocal
+    convention (EUR per 1 USD — "Quantita' di valuta estera per 1 Dollaro",
+    confirmed against the live API), so it must be inverted before it can be
+    used the same way.
+    """
     from bdi_rates import get_bdi_eur_usd_rate
     from prices import get_eur_usd_rate
 
     if sale_date >= timezone.localdate():
         return get_eur_usd_rate()
-    return get_bdi_eur_usd_rate(sale_date)
+    bdi_rate = get_bdi_eur_usd_rate(sale_date)
+    return Decimal("1") / bdi_rate if bdi_rate else None
 
 
 def _execute_sale(

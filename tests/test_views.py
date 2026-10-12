@@ -650,7 +650,7 @@ class TestSimulateView:
         from app import Lot
 
         monkeypatch.setattr(
-            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("0.90000")
+            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("0.80000")
         )
         lot = Lot.objects.create(**LOT_DEFAULTS)
         response = client.post(
@@ -658,7 +658,7 @@ class TestSimulateView:
             {f"qty_{lot.pk}": "5", "sale_price": "200", "sale_date": "2024-01-15"},
         )
         assert response.status_code == 200
-        assert b'"eur_usd": "0.90000"' in response.content
+        assert b'"eur_usd": "1.25"' in response.content
 
     def test_post_with_past_date_and_unavailable_rate_shows_message(
         self, client, mock_prices, monkeypatch
@@ -721,10 +721,13 @@ class TestResolveSaleRate:
         import bdi_rates
         from app import _resolve_sale_rate
 
+        # bdi_rates returns EUR per 1 USD ("Quantita' di valuta estera per 1
+        # Dollaro"); _resolve_sale_rate must invert it to USD per 1 EUR so it
+        # matches the division-based conversion used everywhere else.
         monkeypatch.setattr(
-            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("0.90000")
+            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("0.80000")
         )
-        assert _resolve_sale_rate(date(2024, 1, 15)) == Decimal("0.90000")
+        assert _resolve_sale_rate(date(2024, 1, 15)) == Decimal("1.25")
 
     def test_future_date_uses_live_rate(self, monkeypatch):
         from django.utils import timezone
