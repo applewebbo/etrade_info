@@ -7,7 +7,7 @@
 <section class="mb-6">
   <div class="card bg-base-100 border border-base-300">
     <div class="card-body">
-    <h3 class="card-title">Importa</h3>
+    <h3 class="card-title">Importa Dati</h3>
     {% if count %}
     <div class="flex items-center gap-2 text-sm">
       <span class="status status-success"></span>
@@ -158,7 +158,7 @@
 <section class="mb-6">
   <div class="card bg-base-100 border border-base-300">
     <div class="card-body">
-    <h3 class="card-title">Backup completo</h3>
+    <h3 class="card-title">Gestisci Dati</h3>
     <div class="flex items-center justify-between gap-4">
       <div class="flex-1 min-w-0">
         <strong>Scarica un backup completo (JSON)</strong>
@@ -192,49 +192,7 @@
         </div>
       </div>
     </div>
-    </div>
-  </div>
-</section>
-
-{% if deleted_sales %}
-<section class="mb-6">
-  <div class="card bg-base-100 border border-base-300 max-w-3xl mx-auto">
-    <div class="card-body">
-    <h3 class="card-title">Vendite Annullate</h3>
-    <p class="text-sm text-base-content/60 mb-2">
-      {% if deleted_sales|length == 1 %}L'ultima vendita eliminata dalla Dashboard.{% else %}Le ultime {{ deleted_sales|length }} vendite eliminate dalla Dashboard.{% endif %}
-      Oltre le 5 più recenti, le eliminazioni più vecchie vengono scartate definitivamente.
-    </p>
-    <div class="divide-y divide-base-300">
-    {% for sale in deleted_sales %}
-    <div class="flex items-center justify-between gap-4 py-3">
-      <div>
-        <div class="font-semibold">{{ sale.sale_date|date:"d/m/Y" }}</div>
-        <div class="text-xs text-base-content/60">${{ sale.sale_price_usd|floatformat:2 }}/azione</div>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="text-right">
-          <div class="text-xs text-base-content/60">Ricavo ${{ sale.gross_proceeds_usd|floatformat:2 }}</div>
-          <div class="text-sm font-medium">Tasse ${{ sale.tax_usd|floatformat:2 }}</div>
-        </div>
-        <button class="btn btn-sm shrink-0"
-                hx-post="/sell/restore/{{ sale.pk }}/"
-                hx-confirm="Ripristinare questa vendita? Le quantità verranno sottratte di nuovo dal portfolio.">
-          Ripristina
-        </button>
-      </div>
-    </div>
-    {% endfor %}
-    </div>
-    </div>
-  </div>
-</section>
-{% endif %}
-
-<section>
-  <div class="card bg-base-100 border border-base-300">
-    <div class="card-body">
-    <h3 class="card-title">Danger Zone</h3>
+    <div class="divider"></div>
     <div class="flex items-center justify-between gap-4">
       <div class="flex-1 min-w-0">
         <strong>Cancella tutte le posizioni</strong>
@@ -247,5 +205,40 @@
     </div>
   </div>
 </section>
+
+{% if deleted_sales %}
+<section class="mb-6">
+  <div class="card bg-base-100 border border-base-300">
+    <div class="card-body">
+    <h3 class="card-title">Vendite Annullate</h3>
+    <p class="text-sm text-base-content/60 mb-2">
+      {% if deleted_sales|length == 1 %}L'ultima vendita eliminata dalla Dashboard.{% else %}Le ultime {{ deleted_sales|length }} vendite eliminate dalla Dashboard.{% endif %}
+      Oltre le 5 più recenti, le eliminazioni più vecchie vengono scartate definitivamente.
+    </p>
+    <div class="grid grid-cols-2 max-[700px]:grid-cols-1 gap-4">
+    {% for sale in deleted_sales %}
+    <div class="flex items-center justify-between gap-4 py-3">
+      <div class="flex items-center gap-12">
+        <div>
+          <div class="font-semibold">{{ sale.sale_date|date:"d/m/Y" }}</div>
+          <div class="text-xs text-base-content/60">${{ sale.sale_price_usd|floatformat:2 }}/azione</div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-medium">Tasse ${{ sale.tax_usd|floatformat:2 }}</div>
+          <div class="text-xs text-base-content/60">Ricavo ${{ sale.gross_proceeds_usd|floatformat:2 }}</div>
+        </div>
+      </div>
+      <button class="btn btn-error btn-outline btn-sm shrink-0"
+              hx-post="/sell/restore/{{ sale.pk }}/"
+              hx-confirm="Ripristinare questa vendita? Le quantità verranno sottratte di nuovo dal portfolio.">
+        Ripristina
+      </button>
+    </div>
+    {% endfor %}
+    </div>
+    </div>
+  </div>
+</section>
+{% endif %}
 
 {% endblock %}
