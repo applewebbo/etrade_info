@@ -637,12 +637,11 @@ def _portfolio_context():
 
 
 def _sale_year_options() -> list[int]:
-    years = (
-        Sale.objects.filter(deleted_at__isnull=True)
-        .values_list("sale_date__year", flat=True)
-        .distinct()
-    )
-    return sorted(years, reverse=True)
+    # .distinct() alone isn't enough here: Sale's default ordering (-created_at)
+    # drags created_at into the implicit ORDER BY, which defeats DISTINCT on
+    # sale_date__year alone — dedupe in Python instead.
+    years = Sale.objects.filter(deleted_at__isnull=True).values_list("sale_date__year", flat=True)
+    return sorted(set(years), reverse=True)
 
 
 @app.route("/")

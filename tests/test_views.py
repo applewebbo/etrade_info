@@ -527,6 +527,22 @@ class TestDashboardSales:
         assert b'value="2023"' in response.content
         assert b'value="2024"' in response.content
 
+    def test_dashboard_year_selector_has_no_duplicate_options_for_same_year(self, client):
+        from app import Sale
+
+        for i in range(3):
+            Sale.objects.create(
+                **{
+                    **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+                    "sale_date": date(2024, i + 1, 1),
+                }
+            )
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2023, 5, 1)}
+        )
+        response = client.get("/")
+        assert response.content.count(b'value="2024"') == 1
+
     def test_dashboard_defaults_to_most_recent_sale_year(self, client):
         from app import Sale
 
