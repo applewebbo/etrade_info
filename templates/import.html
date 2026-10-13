@@ -200,8 +200,11 @@
 <section class="mb-6">
   <div class="card bg-base-100 border border-base-300 max-w-3xl mx-auto">
     <div class="card-body">
-    <h3 class="card-title">Ultime eliminazioni</h3>
-    <p class="text-sm text-base-content/60 mb-2">Le ultime {{ deleted_sales|length }} vendite eliminate dalla Dashboard. Oltre questo numero, le eliminazioni più vecchie vengono scartate definitivamente.</p>
+    <h3 class="card-title">Vendite Annullate</h3>
+    <p class="text-sm text-base-content/60 mb-2">
+      {% if deleted_sales|length == 1 %}L'ultima vendita eliminata dalla Dashboard.{% else %}Le ultime {{ deleted_sales|length }} vendite eliminate dalla Dashboard.{% endif %}
+      Oltre le 5 più recenti, le eliminazioni più vecchie vengono scartate definitivamente.
+    </p>
     <div class="divide-y divide-base-300">
     {% for sale in deleted_sales %}
     <div class="flex items-center justify-between gap-4 py-3">
