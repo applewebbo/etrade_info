@@ -107,9 +107,9 @@
       {% if row.lot.plan_type == "RSU" %}
         <span class="text-base-content/40">n/d</span>
       {% elif row.lot.period_label == "Long Term" %}
-        <span class="badge badge-sm bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-0">+3y</span>
+        <span class="badge badge-sm badge-success">+3y</span>
       {% else %}
-        <span class="badge badge-sm bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300 border-0">-3y</span>
+        <span class="badge badge-sm badge-warning">-3y</span>
       {% endif %}
     </td>
   </tr>

@@ -1,9 +1,9 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: corporate --default, dracula --prefersdark;
+  themes: bumblebee --default, dracula --prefersdark;
 }
 @plugin "daisyui/theme" {
-  name: "corporate";
+  name: "bumblebee";
   --radius-box: .5rem;
 }
 @plugin "daisyui/theme" {

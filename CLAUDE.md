@@ -43,7 +43,7 @@ Key modules:
 
 ### Frontend
 
-Static assets are fully bundled (no CDN). Templates use **Tailwind CSS v4 + daisyUI** (`corporate` theme) + **HTMX** + **Alpine.js**, all served from `static/`.
+Static assets are fully bundled (no CDN). Templates use **Tailwind CSS v4 + daisyUI** (`bumblebee` theme, `dracula` for dark/`prefers-color-scheme`) + **HTMX** + **Alpine.js**, all served from `static/`.
 
 - `frontend/source.css` is the Tailwind entry point (theme config, `@source` scan path). It's compiled via **`django-tailwind-cli`** (pure Python, no Node/npm) to `static/css/tailwind.css`, loaded in `base.html` via `{% load tailwind_cli %}{% tailwind_css %}`.
 - `static/css/tailwind.css` (the compiled output) is gitignored, never committed — `just install` builds it for a fresh clone, `just serve`'s watch mode keeps it current while developing, and `update-assets`/`dist` depend on `tailwind-build` so the shipped stylesheet is always a fresh minified build.

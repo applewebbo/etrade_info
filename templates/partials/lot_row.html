@@ -7,9 +7,9 @@
     {% if lot.plan_type == "RSU" %}
       <span class="text-base-content/40">n/d</span>
     {% elif lot.period_label == "Long Term" %}
-      <span class="badge badge-sm bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-0">+3y</span>
+      <span class="badge badge-sm badge-success">+3y</span>
     {% else %}
-      <span class="badge badge-sm bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300 border-0">-3y</span>
+      <span class="badge badge-sm badge-warning">-3y</span>
     {% endif %}
   </td>
   <td class="text-center" x-data="{ qty: 0, max: {{ lot.sellable_qty|floatformat:'4u' }}, set(v){ this.qty=v; this.$nextTick(()=>this.$refs.q.dispatchEvent(new Event('change',{bubbles:true}))) } }">
@@ -17,9 +17,9 @@
       <input x-ref="q" type="text" inputmode="decimal" name="qty_{{ lot.pk }}"
              x-model.number="qty"
              class="input input-sm join-item w-16 text-right" />
-      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-300{% else %}bg-purple-50 border-purple-500 text-purple-700 dark:bg-purple-950 dark:border-purple-700 dark:text-purple-300{% endif %}" @click="set(Math.max(qty-1,0))">-1</button>
-      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-300{% else %}bg-purple-50 border-purple-500 text-purple-700 dark:bg-purple-950 dark:border-purple-700 dark:text-purple-300{% endif %}" @click="set(Math.min(qty+1,max))">+1</button>
-      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-300{% else %}bg-purple-50 border-purple-500 text-purple-700 dark:bg-purple-950 dark:border-purple-700 dark:text-purple-300{% endif %}" @click="set(max)">Max</button>
+      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}btn-primary{% else %}btn-secondary{% endif %}" @click="set(Math.max(qty-1,0))">-1</button>
+      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}btn-primary{% else %}btn-secondary{% endif %}" @click="set(Math.min(qty+1,max))">+1</button>
+      <button type="button" class="btn btn-sm join-item {% if accent == 'espp' %}btn-primary{% else %}btn-secondary{% endif %}" @click="set(max)">Max</button>
     </div>
   </td>
 </tr>
