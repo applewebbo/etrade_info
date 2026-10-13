@@ -11,6 +11,16 @@ from django.http import HttpRequest
 
 RELEASES: list[dict] = [
     {
+        "version": "2026.3",
+        "date": date(2026, 10, 13),
+        "notes": [
+            "Corretti alcuni errori nel calcolo delle tasse: il netting di guadagni e perdite tra vendite diverse nello stesso anno, e un'inversione nel cambio storico Banca d'Italia che in alcuni casi alterava l'imposta dovuta.",
+            "Aggiunto un tema scuro automatico, che segue le preferenze del sistema operativo o del browser.",
+            "Lo storico vendite in Dashboard ora permette di scegliere l'anno e di eliminare una vendita: l'eliminazione è annullabile dalle Impostazioni (fino alle ultime 5).",
+            "Aggiunta una guida nella pagina Impostazioni su dove scaricare i file da E*TRADE, oltre a vari ritocchi grafici (allineamenti, colori più coerenti tra tema chiaro e scuro).",
+        ],
+    },
+    {
         "version": "2026.2",
         "date": date(2026, 10, 11),
         "notes": [

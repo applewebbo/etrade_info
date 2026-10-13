@@ -18,7 +18,7 @@ dependencies = [
 description = "Local equity tax simulator for Italian regime dichiarativo"
 name = "etrade-info"
 requires-python = ">=3.12"
-version = "2026.2"
+version = "2026.3"
 
 [tool.bandit]
 exclude_dirs = ["tests"]
