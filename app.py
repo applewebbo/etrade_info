@@ -93,6 +93,7 @@ class Sale(models.Model):
     net_gain_usd = models.DecimalField(max_digits=14, decimal_places=5)
     tax_usd = models.DecimalField(max_digits=14, decimal_places=5)
     order_number = models.CharField(max_length=20, null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -230,6 +231,7 @@ def _sale_to_dict(sale: "Sale") -> dict:
         "gross_proceeds_usd": str(sale.gross_proceeds_usd),
         "net_gain_usd": str(sale.net_gain_usd),
         "tax_usd": str(sale.tax_usd),
+        "deleted_at": sale.deleted_at.isoformat() if sale.deleted_at else None,
         "lots": [
             {
                 "original_lot_id": sl.original_lot_id,
@@ -291,7 +293,11 @@ def restore_backup(data: dict) -> None:
             tax_usd=Decimal(sale_data["tax_usd"]),
         )
         # created_at uses auto_now_add, so it must be restored via update().
-        Sale.objects.filter(pk=sale.pk).update(created_at=created_at)
+        deleted_at = sale_data.get("deleted_at")
+        Sale.objects.filter(pk=sale.pk).update(
+            created_at=created_at,
+            deleted_at=datetime.fromisoformat(deleted_at) if deleted_at else None,
+        )
         for sl in sale_data.get("lots", []):
             SaleLot.objects.create(
                 sale=sale,
@@ -337,6 +343,66 @@ def _resolve_sale_rate(sale_date: date) -> "Decimal | None":
     return Decimal("1") / bdi_rate if bdi_rate else None
 
 
+def _lot_match_key(obj) -> dict:
+    """Key used to re-find a live Lot matching a SaleLot/tranche snapshot.
+
+    Not pk-based: a full-sale deletion recreates the Lot with a new pk, and an
+    "overwrite" Sellable re-import rebuilds every Lot from scratch, so a stored
+    original_lot_id can go stale. Matching on these attributes instead keeps
+    reversing/re-applying a sale correct across either kind of churn.
+    """
+    return {
+        "symbol": obj.symbol,
+        "plan_type": obj.plan_type,
+        "date_acquired": obj.date_acquired,
+        "cost_basis": obj.cost_basis,
+    }
+
+
+def _restore_sale_to_portfolio(sale: "Sale") -> None:
+    """Put a sale's quantities back into the portfolio (reverses its effect)."""
+    for slot in sale.lots.all():
+        if slot.original_lot_id is None:
+            continue
+        lot = Lot.objects.filter(**_lot_match_key(slot)).first()
+        if lot:
+            lot.sellable_qty += slot.qty_sold
+            lot.save()
+        else:
+            Lot.objects.create(
+                **_lot_match_key(slot),
+                sellable_qty=slot.qty_sold,
+                grant_date=slot.grant_date,
+                tax_status=slot.tax_status,
+            )
+
+
+def _apply_sale_to_portfolio(sale: "Sale") -> None:
+    """Subtract a sale's quantities from the portfolio (re-applies its effect)."""
+    for slot in sale.lots.all():
+        if slot.original_lot_id is None:
+            continue
+        lot = Lot.objects.filter(**_lot_match_key(slot)).first()
+        if not lot:
+            continue
+        if slot.qty_sold >= lot.sellable_qty:
+            lot.delete()
+        else:
+            lot.sellable_qty -= slot.qty_sold
+            lot.save()
+
+
+def _purge_old_deletions(keep: int = 5) -> None:
+    """Permanently remove soft-deleted sales beyond the most recent `keep`."""
+    stale_ids = list(
+        Sale.objects.filter(deleted_at__isnull=False)
+        .order_by("-deleted_at")
+        .values_list("pk", flat=True)[keep:]
+    )
+    if stale_ids:
+        Sale.objects.filter(pk__in=stale_ids).delete()
+
+
 def _execute_sale(
     selected: list, sale_price: Decimal, eur_usd: Decimal, sale_date: date | None = None
 ) -> "dict | None":
@@ -380,22 +446,43 @@ def _execute_sale(
     return {"sale": sale, "updated_lots": updated_lots, "deleted_lot_pks": deleted_lot_pks}
 
 
-def import_gains_losses(orders: list[dict], mode: str, year: int) -> int:
+def import_gains_losses(
+    orders: list[dict],
+    mode: str,
+    year: int,
+    update_portfolio: bool = True,
+    unmatched_warnings: "list | None" = None,
+) -> int:
     """Batch-record historical sales from a parsed Gains & Losses export.
 
     Scoped to a single reference tax `year`. In "overwrite" mode, replaces all
     previously-imported (order_number-tagged) Sale/SaleLot records for that
     year, leaving manually-recorded sales untouched. In "incremental" mode,
     skips orders whose order_number is already recorded. Both modes are
-    idempotent: re-running the same import yields the same end state.
-    Does not touch Lot.sellable_qty.
+    idempotent: re-running the same (or an extended) import yields the same
+    end state.
+
+    When `update_portfolio` is True and `year` is the current, in-progress
+    year, each tranche is matched to a live Lot (by symbol/plan_type/
+    date_acquired/cost_basis) and reduced/deleted exactly like a manually
+    recorded sale. An unmatched tranche is left alone (best-effort) and, if
+    `unmatched_warnings` is given, appended to it so the caller can surface a
+    "portfolio may be out of sync" notice to the user.
+    Past years never touch Lot.sellable_qty, regardless of the flag, since
+    they aren't reconciled against a live portfolio snapshot here.
     """
     from tax_engine import calculate_sale_result
+
+    current_year = timezone.localdate().year
+    mutate_portfolio = update_portfolio and year == current_year
 
     orders = [o for o in orders if o["sale_date"].year == year]
 
     if mode == "overwrite":
-        Sale.objects.filter(sale_date__year=year, order_number__isnull=False).delete()
+        stale = Sale.objects.filter(sale_date__year=year, order_number__isnull=False)
+        for sale in stale.filter(deleted_at__isnull=True):
+            _restore_sale_to_portfolio(sale)
+        stale.delete()
     else:
         existing = set(
             Sale.objects.filter(order_number__isnull=False).values_list("order_number", flat=True)
@@ -421,9 +508,28 @@ def import_gains_losses(orders: list[dict], mode: str, year: int) -> int:
         )
         for entry in result["per_lot"]:
             tranche = entry["lot"]
+            original_lot_id = None
+            if mutate_portfolio:
+                matched = Lot.objects.filter(**_lot_match_key(tranche)).first()
+                if matched:
+                    original_lot_id = matched.pk
+                    if entry["qty"] >= matched.sellable_qty:
+                        matched.delete()
+                    else:
+                        matched.sellable_qty -= entry["qty"]
+                        matched.save()
+                elif unmatched_warnings is not None:
+                    unmatched_warnings.append(
+                        {
+                            "symbol": tranche.symbol,
+                            "plan_type": tranche.plan_type,
+                            "date_acquired": tranche.date_acquired,
+                            "qty": entry["qty"],
+                        }
+                    )
             SaleLot.objects.create(
                 sale=sale,
-                original_lot_id=None,
+                original_lot_id=original_lot_id,
                 symbol=tranche.symbol,
                 plan_type=tranche.plan_type,
                 date_acquired=tranche.date_acquired,
@@ -530,16 +636,34 @@ def _portfolio_context():
 # ── views ─────────────────────────────────────────────────────────────────────
 
 
+def _sale_year_options() -> list[int]:
+    years = (
+        Sale.objects.filter(deleted_at__isnull=True)
+        .values_list("sale_date__year", flat=True)
+        .distinct()
+    )
+    return sorted(years, reverse=True)
+
+
 @app.route("/")
 def dashboard(request):
-    from django.core.paginator import Paginator
     from django.shortcuts import render
 
     has_lots = Lot.objects.exists()
-    paginator = Paginator(Sale.objects.prefetch_related("lots").all(), 10)
-    sales_page = paginator.get_page(request.GET.get("page"))
+    sale_years = _sale_year_options()
+    current_year = timezone.localdate().year
+    default_year = sale_years[0] if sale_years else current_year
+    year = _parse_tax_year(request.GET.get("year"), sale_years or [default_year], default_year)
+    sales = (
+        Sale.objects.filter(deleted_at__isnull=True, sale_date__year=year)
+        .prefetch_related("lots")
+        .order_by("sale_date")
+    )
     ctx = _portfolio_context() if has_lots else {"has_lots": False}
-    ctx["sales"] = sales_page
+    ctx["sales"] = sales
+    ctx["sale_years"] = sale_years
+    ctx["sale_year"] = year
+    ctx["current_year"] = current_year
     return render(request, "dashboard.html", ctx)
 
 
@@ -576,7 +700,6 @@ def _save_upload_to_tmp(f) -> str:
 
 @app.route("/import/")
 def import_view(request):
-    from django.core.paginator import Paginator
     from django.shortcuts import redirect, render
 
     if request.method == "POST" and request.FILES.get("xlsx"):
@@ -594,19 +717,32 @@ def import_view(request):
         tmp_path = _save_upload_to_tmp(request.FILES["gl_xlsx"])
         mode = request.POST.get("gl_mode", "overwrite")
         year = _parse_tax_year(request.POST.get("year"), _gl_year_options(), _gl_default_year())
-        import_gains_losses(parse_gains_losses_xlsx(tmp_path), mode=mode, year=year)
+        update_portfolio = request.POST.get("update_portfolio") == "on"
+        unmatched = []
+        import_gains_losses(
+            parse_gains_losses_xlsx(tmp_path),
+            mode=mode,
+            year=year,
+            update_portfolio=update_portfolio,
+            unmatched_warnings=unmatched,
+        )
 
-        return redirect(f"/tasse/?year={year}")
+        redirect_url = f"/tasse/?year={year}"
+        if unmatched:
+            redirect_url += f"&unmatched={len(unmatched)}"
+        return redirect(redirect_url)
 
-    paginator = Paginator(Sale.objects.prefetch_related("lots").all(), 10)
     return render(
         request,
         "import.html",
         {
             "count": Lot.objects.count(),
-            "sales": paginator.get_page(request.GET.get("page")),
+            "deleted_sales": Sale.objects.filter(deleted_at__isnull=False).order_by("-deleted_at")[
+                :5
+            ],
             "gl_years": _gl_year_options(),
             "gl_default_year": _gl_default_year(),
+            "current_year": timezone.localdate().year,
         },
     )
 
@@ -752,32 +888,41 @@ def sell_view(request):
     return response
 
 
-@app.route("/sell/undo/")
-def sell_undo_view(request):
+@app.route("/sell/delete/<int:sale_id>/")
+def sale_delete_view(request, sale_id):
+    from django.http import HttpResponse
+    from django.shortcuts import redirect
+
+    if request.method != "POST":
+        return redirect("/")
+
+    sale = Sale.objects.filter(
+        pk=sale_id, deleted_at__isnull=True, sale_date__year=timezone.localdate().year
+    ).first()
+    if sale:
+        _restore_sale_to_portfolio(sale)
+        sale.deleted_at = timezone.now()
+        sale.save()
+        _purge_old_deletions()
+
+    response = HttpResponse()
+    response["HX-Redirect"] = "/"
+    return response
+
+
+@app.route("/sell/restore/<int:sale_id>/")
+def sale_restore_view(request, sale_id):
     from django.http import HttpResponse
     from django.shortcuts import redirect
 
     if request.method != "POST":
         return redirect("/import/")
 
-    last_sale = Sale.objects.first()
-    if last_sale:
-        for slot in last_sale.lots.all():
-            try:
-                lot = Lot.objects.get(pk=slot.original_lot_id)
-                lot.sellable_qty += slot.qty_sold
-                lot.save()
-            except Lot.DoesNotExist:
-                Lot.objects.create(
-                    symbol=slot.symbol,
-                    plan_type=slot.plan_type,
-                    date_acquired=slot.date_acquired,
-                    grant_date=slot.grant_date,
-                    sellable_qty=slot.qty_sold,
-                    cost_basis=slot.cost_basis,
-                    tax_status=slot.tax_status,
-                )
-        last_sale.delete()
+    sale = Sale.objects.filter(pk=sale_id, deleted_at__isnull=False).first()
+    if sale:
+        _apply_sale_to_portfolio(sale)
+        sale.deleted_at = None
+        sale.save()
 
     response = HttpResponse()
     response["HX-Redirect"] = "/import/"
@@ -793,7 +938,9 @@ def _tax_year_options(current_year: int) -> list[int]:
     """
     last_complete_year = current_year - 1
     lot_years = Lot.objects.values_list("date_acquired__year", flat=True)
-    sale_years = Sale.objects.values_list("sale_date__year", flat=True)
+    sale_years = Sale.objects.filter(deleted_at__isnull=True).values_list(
+        "sale_date__year", flat=True
+    )
     relevant_years = {y for y in [*lot_years, *sale_years]}
     earliest = min(relevant_years) if relevant_years else last_complete_year
     return list(range(earliest, current_year + 1))
@@ -816,7 +963,7 @@ def _gl_year_options() -> list[int]:
 
 
 def _gl_default_year() -> int:
-    return timezone.localdate().year - 1
+    return timezone.localdate().year
 
 
 @app.route("/tasse/")
@@ -835,6 +982,10 @@ def tasse_view(request):
     default_year = current_year - 1
     available_years = _tax_year_options(current_year)
     year = _parse_tax_year(request.GET.get("year"), available_years, default_year)
+    try:
+        unmatched_count = int(request.GET.get("unmatched", 0))
+    except ValueError:
+        unmatched_count = 0
     lots = list(Lot.objects.all())
 
     def _aapl_price(start: datetime.date, end: datetime.date, idx: int) -> Decimal | None:
@@ -870,7 +1021,9 @@ def tasse_view(request):
 
     data_available = all([price_start, price_end, rate_start, rate_end])
 
-    sales = list(Sale.objects.filter(sale_date__year=year).order_by("sale_date"))
+    sales = list(
+        Sale.objects.filter(sale_date__year=year, deleted_at__isnull=True).order_by("sale_date")
+    )
     if sales:
         net_gain_eur = sum(s.net_gain_eur for s in sales)
         sales_totals = {
@@ -887,7 +1040,11 @@ def tasse_view(request):
     else:
         sales_totals = None
 
-    sold_lots = list(SaleLot.objects.filter(sale__sale_date__year=year).select_related("sale"))
+    sold_lots = list(
+        SaleLot.objects.filter(
+            sale__sale_date__year=year, sale__deleted_at__isnull=True
+        ).select_related("sale")
+    )
 
     ctx = {
         "year": year,
@@ -897,6 +1054,7 @@ def tasse_view(request):
         "is_in_progress_year": is_in_progress_year,
         "sales": sales,
         "sales_totals": sales_totals,
+        "unmatched_count": unmatched_count,
     }
     if data_available and (lots or sold_lots):
         ivafe_data = calculate_ivafe(

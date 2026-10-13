@@ -250,12 +250,15 @@ class TestSellView:
 
 
 @pytest.mark.django_db
-class TestSellUndoView:
-    def _create_sale_with_lot(self):
+class TestSaleDeleteView:
+    def _create_sale_with_lot(self, sale_date=None):
         from app import Lot, Sale, SaleLot
 
         lot = Lot.objects.create(**LOT_DEFAULTS)
-        sale = Sale.objects.create(**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()})
+        kwargs = {k: Decimal(v) for k, v in SALE_DEFAULTS.items()}
+        if sale_date:
+            kwargs["sale_date"] = sale_date
+        sale = Sale.objects.create(**kwargs)
         SaleLot.objects.create(
             sale=sale,
             original_lot_id=lot.pk,
@@ -273,9 +276,9 @@ class TestSellUndoView:
     def test_post_restores_deleted_lot(self, client):
         from app import Lot
 
-        self._create_sale_with_lot()
+        sale = self._create_sale_with_lot()
         assert Lot.objects.count() == 0
-        client.post("/sell/undo/")
+        client.post(f"/sell/delete/{sale.pk}/")
         assert Lot.objects.count() == 1
         restored = Lot.objects.first()
         assert restored.sellable_qty == Decimal("10")
@@ -296,30 +299,192 @@ class TestSellUndoView:
             tax_status=lot.tax_status,
             gain_usd=Decimal("400.00000"),
         )
-        client.post("/sell/undo/")
+        client.post(f"/sell/delete/{sale.pk}/")
         updated = Lot.objects.get(pk=lot.pk)
         assert updated.sellable_qty == Decimal("10")
 
-    def test_post_deletes_last_sale(self, client):
+    def test_post_soft_deletes_sale(self, client):
         from app import Sale
 
-        self._create_sale_with_lot()
+        sale = self._create_sale_with_lot()
+        client.post(f"/sell/delete/{sale.pk}/")
+        sale.refresh_from_db()
+        assert sale.deleted_at is not None
         assert Sale.objects.count() == 1
-        client.post("/sell/undo/")
-        assert Sale.objects.count() == 0
+
+    def test_post_returns_hx_redirect_to_dashboard(self, client):
+        sale = self._create_sale_with_lot()
+        response = client.post(f"/sell/delete/{sale.pk}/")
+        assert response.status_code == 200
+        assert response.headers.get("HX-Redirect") == "/"
+
+    def test_past_year_sale_cannot_be_deleted(self, client):
+        sale = self._create_sale_with_lot(sale_date=date(2020, 1, 1))
+        client.post(f"/sell/delete/{sale.pk}/")
+        sale.refresh_from_db()
+        assert sale.deleted_at is None
+
+    def test_already_deleted_sale_is_a_noop(self, client):
+        from django.utils import timezone
+
+        sale = self._create_sale_with_lot()
+        sale.deleted_at = timezone.now()
+        sale.save()
+        first_deleted_at = sale.deleted_at
+        client.post(f"/sell/delete/{sale.pk}/")
+        sale.refresh_from_db()
+        assert sale.deleted_at == first_deleted_at
+
+    def test_purges_oldest_deletion_beyond_five(self, client):
+        from app import Sale
+
+        sales = [self._create_sale_with_lot() for _ in range(6)]
+        for sale in sales:
+            client.post(f"/sell/delete/{sale.pk}/")
+        assert Sale.objects.filter(deleted_at__isnull=False).count() == 5
+        assert not Sale.objects.filter(pk=sales[0].pk).exists()
+
+    def test_get_redirects_to_dashboard(self, client):
+        response = client.get("/sell/delete/1/")
+        assert response.status_code == 302
+        assert response.url == "/"
+
+    def test_post_with_unknown_sale_id_is_safe(self, client):
+        response = client.post("/sell/delete/99999/")
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
+class TestSaleRestoreView:
+    def _soft_deleted_sale(self):
+        from django.utils import timezone
+
+        from app import Lot, Sale, SaleLot
+
+        lot = Lot.objects.create(**LOT_DEFAULTS)
+        sale = Sale.objects.create(
+            **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+            deleted_at=timezone.now(),
+        )
+        SaleLot.objects.create(
+            sale=sale,
+            original_lot_id=lot.pk,
+            symbol=lot.symbol,
+            plan_type=lot.plan_type,
+            date_acquired=lot.date_acquired,
+            qty_sold=lot.sellable_qty,
+            cost_basis=lot.cost_basis,
+            tax_status=lot.tax_status,
+            gain_usd=Decimal("1000.00000"),
+        )
+        return sale, lot
+
+    def test_post_reduces_lot_again(self, client):
+        from app import Lot
+
+        sale, lot = self._soft_deleted_sale()
+        client.post(f"/sell/restore/{sale.pk}/")
+        assert not Lot.objects.filter(pk=lot.pk).exists()
+
+    def test_post_clears_deleted_at(self, client):
+        sale, _ = self._soft_deleted_sale()
+        client.post(f"/sell/restore/{sale.pk}/")
+        sale.refresh_from_db()
+        assert sale.deleted_at is None
 
     def test_post_returns_hx_redirect_to_import(self, client):
-        self._create_sale_with_lot()
-        response = client.post("/sell/undo/")
+        sale, _ = self._soft_deleted_sale()
+        response = client.post(f"/sell/restore/{sale.pk}/")
         assert response.status_code == 200
         assert response.headers.get("HX-Redirect") == "/import/"
 
-    def test_post_with_no_sales_is_safe(self, client):
+    def test_post_reduces_partial_qty_when_lot_qty_exceeds_sale(self, client):
+        from django.utils import timezone
+
+        from app import Lot, Sale, SaleLot
+
+        lot = Lot.objects.create(**{**LOT_DEFAULTS, "sellable_qty": Decimal("10")})
+        sale = Sale.objects.create(
+            **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+            deleted_at=timezone.now(),
+        )
+        SaleLot.objects.create(
+            sale=sale,
+            original_lot_id=lot.pk,
+            symbol=lot.symbol,
+            plan_type=lot.plan_type,
+            date_acquired=lot.date_acquired,
+            qty_sold=Decimal("4"),
+            cost_basis=lot.cost_basis,
+            tax_status=lot.tax_status,
+            gain_usd=Decimal("400.00000"),
+        )
+        client.post(f"/sell/restore/{sale.pk}/")
+        lot.refresh_from_db()
+        assert lot.sellable_qty == Decimal("6")
+
+    def test_post_with_unmatched_original_lot_id_is_a_noop(self, client):
+        from django.utils import timezone
+
+        from app import Sale, SaleLot
+
+        sale = Sale.objects.create(
+            **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+            deleted_at=timezone.now(),
+        )
+        SaleLot.objects.create(
+            sale=sale,
+            original_lot_id=None,
+            symbol="AAPL",
+            plan_type="ESPP",
+            date_acquired=date(2020, 1, 1),
+            qty_sold=Decimal("5"),
+            cost_basis=Decimal("100.00000"),
+            tax_status="Long Term",
+            gain_usd=Decimal("500.00000"),
+        )
+        response = client.post(f"/sell/restore/{sale.pk}/")
+        assert response.status_code == 200
+        sale.refresh_from_db()
+        assert sale.deleted_at is None
+
+    def test_post_with_no_matching_live_lot_is_a_noop(self, client):
+        from django.utils import timezone
+
+        from app import Lot, Sale, SaleLot
+
+        sale = Sale.objects.create(
+            **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+            deleted_at=timezone.now(),
+        )
+        SaleLot.objects.create(
+            sale=sale,
+            original_lot_id=999999,
+            symbol="AAPL",
+            plan_type="ESPP",
+            date_acquired=date(2020, 1, 1),
+            qty_sold=Decimal("5"),
+            cost_basis=Decimal("100.00000"),
+            tax_status="Long Term",
+            gain_usd=Decimal("500.00000"),
+        )
+        client.post(f"/sell/restore/{sale.pk}/")
+        assert Lot.objects.count() == 0
+        sale.refresh_from_db()
+        assert sale.deleted_at is None
+
+    def test_post_on_non_deleted_sale_is_a_noop(self, client):
         from app import Sale
 
-        assert Sale.objects.count() == 0
-        response = client.post("/sell/undo/")
-        assert response.status_code == 200
+        sale = Sale.objects.create(**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()})
+        client.post(f"/sell/restore/{sale.pk}/")
+        sale.refresh_from_db()
+        assert sale.deleted_at is None
+
+    def test_get_redirects_to_import(self, client):
+        response = client.get("/sell/restore/1/")
+        assert response.status_code == 302
+        assert "/import/" in response.url
 
 
 @pytest.mark.django_db
@@ -337,75 +502,130 @@ class TestDashboardSales:
         assert response.status_code == 200
         assert b"Vendite effettuate" not in response.content
 
-    def test_dashboard_paginates_sales_beyond_first_page(self, client):
+    def test_dashboard_excludes_soft_deleted_sales(self, client):
+        from django.utils import timezone
+
         from app import Sale
 
-        for i in range(11):
-            Sale.objects.create(
-                **{
-                    **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
-                    "sale_date": date(2025, 1, i + 1),
-                }
-            )
-
+        Sale.objects.create(
+            **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+            deleted_at=timezone.now(),
+        )
         response = client.get("/")
-        assert response.status_code == 200
-        assert b"Pagina 1 di 2" in response.content
+        assert b"Vendite effettuate" not in response.content
 
-        response = client.get("/?page=2")
-        assert response.status_code == 200
-        assert b"Pagina 2 di 2" in response.content
+    def test_dashboard_shows_year_selector_with_multiple_years(self, client):
+        from app import Sale
 
-    def test_dashboard_no_pagination_controls_within_single_page(self, client):
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2023, 5, 1)}
+        )
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2024, 5, 1)}
+        )
+        response = client.get("/")
+        assert b'value="2023"' in response.content
+        assert b'value="2024"' in response.content
+
+    def test_dashboard_defaults_to_most_recent_sale_year(self, client):
+        from app import Sale
+
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2023, 5, 1)}
+        )
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2024, 5, 1)}
+        )
+        response = client.get("/")
+        assert b'value="2024" selected' in response.content
+
+    def test_dashboard_lists_sales_for_selected_year_in_chronological_order(self, client):
+        from app import Sale
+
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2024, 6, 1)}
+        )
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2024, 1, 1)}
+        )
+        response = client.get("/?year=2024")
+        content = response.content.decode()
+        assert content.index("01/01/2024") < content.index("01/06/2024")
+
+    def test_dashboard_excludes_other_years(self, client):
+        from app import Sale
+
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2023, 5, 1)}
+        )
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2024, 5, 1)}
+        )
+        response = client.get("/?year=2024")
+        assert b"01/05/2023" not in response.content
+        assert b"01/05/2024" in response.content
+
+    def test_dashboard_shows_delete_button_for_current_year_sale(self, client):
         from app import Sale
 
         Sale.objects.create(**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()})
         response = client.get("/")
-        assert response.status_code == 200
-        assert b"Pagina 1 di 1" not in response.content
+        assert b"Elimina" in response.content
+
+    def test_dashboard_hides_delete_button_for_past_year_sale(self, client):
+        from app import Sale
+
+        Sale.objects.create(
+            **{**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()}, "sale_date": date(2020, 1, 1)}
+        )
+        response = client.get("/?year=2020")
+        assert b"Elimina" not in response.content
 
 
 @pytest.mark.django_db
-class TestImportViewSales:
-    def test_import_view_shows_sales_history_when_sales_exist(self, client):
+class TestImportViewDeletedSales:
+    def test_shows_recent_deletions_section_when_present(self, client):
+        from django.utils import timezone
+
         from app import Sale
 
-        Sale.objects.create(**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()})
+        Sale.objects.create(
+            **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
+            deleted_at=timezone.now(),
+        )
         response = client.get("/import/")
         assert response.status_code == 200
-        assert b"Storico vendite" in response.content
+        assert b"Ultime eliminazioni" in response.content
+        assert b"Ripristina" in response.content
 
-    def test_import_view_no_sales_section_when_empty(self, client):
+    def test_no_deletions_section_when_empty(self, client):
         response = client.get("/import/")
         assert response.status_code == 200
-        assert b"Storico vendite" not in response.content
+        assert b"Ultime eliminazioni" not in response.content
 
-    def test_import_view_paginates_sales_beyond_first_page(self, client):
+    def test_shows_only_last_five_deletions(self, client):
+        from django.utils import timezone
+
         from app import Sale
 
-        for i in range(11):
+        for i in range(6):
             Sale.objects.create(
                 **{
                     **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
                     "sale_date": date(2025, 1, i + 1),
-                }
+                },
+                deleted_at=timezone.now(),
             )
-
         response = client.get("/import/")
-        assert response.status_code == 200
-        assert b"Pagina 1 di 2" in response.content
+        assert response.content.count(b"/sell/restore/") == 5
 
-        response = client.get("/import/?page=2")
-        assert response.status_code == 200
-        assert b"Pagina 2 di 2" in response.content
-
-    def test_import_view_no_pagination_controls_within_single_page(self, client):
+    def test_no_storico_vendite_card(self, client):
         from app import Sale
 
         Sale.objects.create(**{k: Decimal(v) for k, v in SALE_DEFAULTS.items()})
         response = client.get("/import/")
-        assert response.status_code == 200
-        assert b"Pagina 1 di 1" not in response.content
+        assert b"Storico vendite" not in response.content
+        assert b"Annulla ultima vendita" not in response.content
 
 
 @pytest.mark.django_db
@@ -435,14 +655,6 @@ class TestSellViewEdgeCases:
         )
         assert response.status_code == 200
         assert Sale.objects.count() == 0
-
-
-@pytest.mark.django_db
-class TestSellUndoViewEdgeCases:
-    def test_get_redirects_to_import(self, client):
-        response = client.get("/sell/undo/")
-        assert response.status_code == 302
-        assert "/import/" in response.url
 
 
 @pytest.mark.django_db
@@ -591,6 +803,53 @@ class TestImportViewPost:
         assert response["Location"] == "/tasse/?year=2024"
         assert Sale.objects.count() == 1
         assert Sale.objects.first().order_number == "102663927"
+
+    def test_post_with_gl_xlsx_current_year_unmatched_tranche_flags_redirect(
+        self, client, monkeypatch
+    ):
+        import io
+
+        from django.utils import timezone
+
+        import bdi_rates
+
+        current_year = timezone.localdate().year
+
+        monkeypatch.setattr(
+            bdi_rates, "get_bdi_eur_usd_rate", lambda d, fetcher=None: Decimal("1.10")
+        )
+
+        data = {
+            "Record Type": ["Sell"],
+            "Symbol": ["AAPL"],
+            "Plan Type": ["RS"],
+            "Quantity": [2],
+            "Date Acquired": ["10/15/2022"],
+            "Adjusted Cost Basis Per Share": [146.54],
+            "Date Sold": [f"05/12/{current_year}"],
+            "Total Proceeds": [589.99],
+            "Capital Gains Status": ["Long"],
+            "Grant Date": ["09/26/2021"],
+            "Order Number": [102663927.0],
+        }
+        buf = io.BytesIO()
+        with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+            pd.DataFrame(data).to_excel(writer, sheet_name="G&L_Expanded", index=False)
+        buf.seek(0)
+        buf.name = "gl.xlsx"
+
+        response = client.post(
+            "/import/",
+            {
+                "gl_xlsx": buf,
+                "gl_mode": "overwrite",
+                "year": str(current_year),
+                "update_portfolio": "on",
+            },
+            format="multipart",
+        )
+        assert response.status_code == 302
+        assert response["Location"] == f"/tasse/?year={current_year}&unmatched=1"
 
 
 @pytest.mark.django_db
@@ -823,6 +1082,16 @@ class TestTasseView:
     def test_page_shows_no_lots_message_when_empty(self, client, mock_ivafe_data):
         response = client.get("/tasse/")
         assert b"lotti" in response.content.lower() or response.status_code == 200
+
+    def test_unmatched_query_param_shows_warning(self, client, mock_ivafe_data):
+        response = client.get("/tasse/?unmatched=2")
+        assert response.status_code == 200
+        assert b"non hanno trovato una corrispondenza" in response.content
+
+    def test_invalid_unmatched_query_param_is_ignored(self, client, mock_ivafe_data):
+        response = client.get("/tasse/?unmatched=not-a-number")
+        assert response.status_code == 200
+        assert b"non hanno trovato una corrispondenza" not in response.content
 
     def test_page_shows_start_and_end_values_with_lots(self, client, mock_ivafe_data):
         from app import Lot

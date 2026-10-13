@@ -99,11 +99,12 @@
           </div>
         </div>
 
-        <form method="post" enctype="multipart/form-data" class="flex flex-col gap-3 flex-1">
+        <form method="post" enctype="multipart/form-data" class="flex flex-col gap-3 flex-1"
+              x-data="{ mode: 'overwrite', year: {{ gl_default_year }}, updatePortfolio: true }">
           {% csrf_token %}
           <input type="file" name="gl_xlsx" accept=".xlsx" required class="file-input file-input-sm w-full" />
 
-          <div x-data="{ mode: 'overwrite' }">
+          <div>
             <div class="flex flex-wrap gap-4">
               <label class="flex items-center gap-1.5 text-sm">
                 <input type="radio" id="gl-mode-overwrite" name="gl_mode" value="overwrite" x-model="mode" checked class="radio radio-sm" />
@@ -122,12 +123,26 @@
 
           <label class="flex items-center gap-2 text-sm">
             Anno fiscale
-            <select name="year" class="select select-sm w-auto">
+            <select name="year" x-model.number="year" class="select select-sm w-auto">
               {% for y in gl_years %}
               <option value="{{ y }}" {% if y == gl_default_year %}selected{% endif %}>{{ y }}</option>
               {% endfor %}
             </select>
           </label>
+
+          <div>
+            <label class="flex items-center gap-1.5 text-sm">
+              <input type="checkbox" name="update_portfolio" x-model="updatePortfolio" :disabled="year !== {{ current_year }}" class="checkbox checkbox-sm" />
+              Aggiorna anche il portfolio
+            </label>
+            <p class="text-xs text-base-content/60 mt-1" x-show="year === {{ current_year }}">
+              <span x-show="updatePortfolio">Le vendite importate riducono anche le quantità vendibili nel portfolio (Dashboard), come una vendita manuale. Se re-importi Sellable dopo questa vendita, è quella la fonte di verità: eliminare poi la vendita potrebbe ripristinare quantità già conteggiate da Sellable.</span>
+              <span x-show="!updatePortfolio">L'import aggiorna solo il Quadro RT (dati fiscali): il portfolio resta invariato. Re-importa anche il file Sellable per avere le quantità vendibili aggiornate.</span>
+            </p>
+            <p class="text-xs text-base-content/60 mt-1" x-show="year !== {{ current_year }}">
+              Gli import di anni passati non modificano mai il portfolio, indipendentemente da questa opzione.
+            </p>
+          </div>
 
           <div class="flex justify-end mt-auto">
             <button type="submit" class="btn btn-primary btn-sm">Importa</button>
@@ -181,50 +196,32 @@
   </div>
 </section>
 
-{% if sales %}
+{% if deleted_sales %}
 <section class="mb-6">
   <div class="card bg-base-100 border border-base-300 max-w-3xl mx-auto">
     <div class="card-body">
-    <h3 class="card-title">Storico vendite</h3>
+    <h3 class="card-title">Ultime eliminazioni</h3>
+    <p class="text-sm text-base-content/60 mb-2">Le ultime {{ deleted_sales|length }} vendite eliminate dalla Dashboard. Oltre questo numero, le eliminazioni più vecchie vengono scartate definitivamente.</p>
     <div class="divide-y divide-base-300">
-    {% for sale in sales %}
+    {% for sale in deleted_sales %}
     <div class="flex items-center justify-between gap-4 py-3">
       <div>
         <div class="font-semibold">{{ sale.sale_date|date:"d/m/Y" }}</div>
         <div class="text-xs text-base-content/60">${{ sale.sale_price_usd|floatformat:2 }}/azione</div>
       </div>
-      <div class="text-right">
-        <div class="text-xs text-base-content/60">Ricavo ${{ sale.gross_proceeds_usd|floatformat:2 }}</div>
-        <div class="text-sm font-medium">Tasse ${{ sale.tax_usd|floatformat:2 }}</div>
+      <div class="flex items-center gap-4">
+        <div class="text-right">
+          <div class="text-xs text-base-content/60">Ricavo ${{ sale.gross_proceeds_usd|floatformat:2 }}</div>
+          <div class="text-sm font-medium">Tasse ${{ sale.tax_usd|floatformat:2 }}</div>
+        </div>
+        <button class="btn btn-sm shrink-0"
+                hx-post="/sell/restore/{{ sale.pk }}/"
+                hx-confirm="Ripristinare questa vendita? Le quantità verranno sottratte di nuovo dal portfolio.">
+          Ripristina
+        </button>
       </div>
     </div>
     {% endfor %}
-    </div>
-
-    {% if sales.paginator.num_pages > 1 %}
-    <div class="flex justify-center mt-4">
-      <div class="join">
-        {% if sales.has_previous %}
-        <a href="{% querystring page=sales.previous_page_number %}" class="btn btn-sm join-item">«</a>
-        {% else %}
-        <button type="button" class="btn btn-sm join-item btn-disabled">«</button>
-        {% endif %}
-        <button type="button" class="btn btn-sm join-item btn-disabled">Pagina {{ sales.number }} di {{ sales.paginator.num_pages }}</button>
-        {% if sales.has_next %}
-        <a href="{% querystring page=sales.next_page_number %}" class="btn btn-sm join-item">»</a>
-        {% else %}
-        <button type="button" class="btn btn-sm join-item btn-disabled">»</button>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
-
-    <div class="flex justify-end mt-4">
-      <button class="btn btn-error btn-outline btn-sm"
-              hx-post="/sell/undo/"
-              hx-confirm="Annullare l'ultima vendita? Le posizioni vendute verranno ripristinate nel portfolio.">
-        Annulla ultima vendita
-      </button>
     </div>
     </div>
   </div>

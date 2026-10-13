@@ -124,8 +124,22 @@
 {% endif %}{# prices_unavailable #}
 {% endif %}{# has_lots #}
 
+{% if sale_years %}
+<div class="flex items-baseline justify-between flex-wrap gap-4 mt-8 mb-4">
+  <h2 class="text-2xl font-bold tracking-tight">Vendite effettuate</h2>
+  {% if sale_years|length > 1 %}
+  <form method="get" class="flex items-center gap-2">
+    <label for="sale-year-select" class="text-sm">Anno</label>
+    <select id="sale-year-select" name="year" onchange="this.form.submit()" class="select select-sm w-auto">
+      {% for y in sale_years %}
+      <option value="{{ y }}" {% if y == sale_year %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  {% endif %}
+</div>
+
 {% if sales %}
-<h2 class="text-2xl font-bold tracking-tight mt-8 mb-4">Vendite effettuate</h2>
 <div class="grid grid-cols-2 max-[700px]:grid-cols-1 gap-4">
 {% for sale in sales %}
 <div class="card bg-base-100 border border-base-300" x-data="{ open: false }">
@@ -149,6 +163,19 @@
       <td class="text-right"><strong>€{{ sale.tax_eur|floatformat:2 }}</strong></td>
     </tr>
   </table>
+  {% if sale.sale_date.year == current_year %}
+  <div class="flex justify-end mt-2">
+    <button type="button" class="btn btn-error btn-outline btn-xs"
+            hx-post="/sell/delete/{{ sale.pk }}/"
+            {% if sale.order_number %}
+            hx-confirm="Eliminare questa vendita importata da Gains &amp; Losses? Le posizioni verranno ripristinate nel portfolio. Se hai già reimportato il file Sellable dopo questa vendita, verifica le quantità risultanti: potrebbero risultare duplicate."
+            {% else %}
+            hx-confirm="Eliminare questa vendita? Le posizioni verranno ripristinate nel portfolio."
+            {% endif %}>
+      Elimina
+    </button>
+  </div>
+  {% endif %}
   </div>
 
   <div class="modal" :class="{ 'modal-open': open }" x-show="open" x-cloak @click.self="open = false">
@@ -181,24 +208,10 @@
 </div>
 {% endfor %}
 </div>
-
-{% if sales.paginator.num_pages > 1 %}
-<div class="flex justify-center mt-6">
-  <div class="join">
-    {% if sales.has_previous %}
-    <a href="{% querystring page=sales.previous_page_number %}" class="btn btn-sm join-item">«</a>
-    {% else %}
-    <button type="button" class="btn btn-sm join-item btn-disabled">«</button>
-    {% endif %}
-    <button type="button" class="btn btn-sm join-item btn-disabled">Pagina {{ sales.number }} di {{ sales.paginator.num_pages }}</button>
-    {% if sales.has_next %}
-    <a href="{% querystring page=sales.next_page_number %}" class="btn btn-sm join-item">»</a>
-    {% else %}
-    <button type="button" class="btn btn-sm join-item btn-disabled">»</button>
-    {% endif %}
-  </div>
+{% else %}
+<div role="alert" class="alert alert-soft">
+  <span>Nessuna vendita registrata per l'anno {{ sale_year }}.</span>
 </div>
-{% endif %}
-
-{% endif %}
+{% endif %}{# sales #}
+{% endif %}{# sale_years #}
 {% endblock %}

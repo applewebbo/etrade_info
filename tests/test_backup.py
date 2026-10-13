@@ -105,6 +105,30 @@ class TestBackupRoundTrip:
         restore_backup(data)
         assert Lot.objects.get().grant_date is None
 
+    def test_export_then_restore_preserves_deleted_at(self):
+        from django.utils import timezone
+
+        from app import Sale, export_backup, restore_backup
+
+        sale = self._make_sale()
+        sale.deleted_at = timezone.now()
+        sale.save()
+        data = export_backup()
+        Sale.objects.all().delete()
+
+        restore_backup(data)
+        assert Sale.objects.get().deleted_at is not None
+
+    def test_export_then_restore_preserves_non_deleted_sale(self):
+        from app import Sale, export_backup, restore_backup
+
+        self._make_sale()
+        data = export_backup()
+        Sale.objects.all().delete()
+
+        restore_backup(data)
+        assert Sale.objects.get().deleted_at is None
+
     def test_restore_rejects_non_dict(self):
         from app import BackupError, restore_backup
 
