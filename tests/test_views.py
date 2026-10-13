@@ -611,30 +611,14 @@ class TestImportViewDeletedSales:
         )
         response = client.get("/import/")
         assert response.status_code == 200
-        assert b"Vendite Annullate" in response.content
+        assert b"Gestisci Vendite" in response.content
         assert b"Ripristina" in response.content
-        assert b"L'ultima vendita eliminata dalla Dashboard." in response.content
-
-    def test_shows_plural_copy_for_multiple_deletions(self, client):
-        from django.utils import timezone
-
-        from app import Sale
-
-        for i in range(2):
-            Sale.objects.create(
-                **{
-                    **{k: Decimal(v) for k, v in SALE_DEFAULTS.items()},
-                    "sale_date": date(2025, 1, i + 1),
-                },
-                deleted_at=timezone.now(),
-            )
-        response = client.get("/import/")
-        assert b"Le ultime 2 vendite eliminate dalla Dashboard." in response.content
+        assert b"Qui puoi vedere le ultime vendite eliminate dalla dashboard." in response.content
 
     def test_no_deletions_section_when_empty(self, client):
         response = client.get("/import/")
         assert response.status_code == 200
-        assert b"Vendite Annullate" not in response.content
+        assert b"Gestisci Vendite" not in response.content
 
     def test_shows_only_last_five_deletions(self, client):
         from django.utils import timezone
