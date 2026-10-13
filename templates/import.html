@@ -16,8 +16,30 @@
     {% endif %}
     <div class="flex flex-col sm:flex-row gap-6 mt-2">
 
-      <div class="flex-1 flex flex-col">
-        <h4 class="font-semibold mb-2">Portfolio (Sellable)</h4>
+      <div class="flex-1 flex flex-col" x-data="{ open: false }">
+        <h4 class="font-semibold mb-2 flex items-center gap-1.5">
+          Portfolio (Sellable)
+          <button type="button" class="text-base-content/50 hover:text-base-content" @click="open = true" aria-label="Dove trovare il file Sellable">
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v4h1"></path></svg>
+          </button>
+        </h4>
+
+        <div class="modal" :class="{ 'modal-open': open }" x-show="open" x-cloak @click.self="open = false">
+          <div class="modal-box max-w-2xl" @click.stop>
+            <div class="flex items-center justify-between mb-4">
+              <strong class="text-lg">Dove trovo il file Sellable</strong>
+              <button class="btn btn-sm btn-circle btn-ghost" @click="open = false" aria-label="Chiudi">✕</button>
+            </div>
+            <p class="mb-3 text-sm font-normal">È l'elenco delle posizioni attualmente vendibili del tuo portfolio (ESPP e RSU), scaricato dalla sezione <strong>Holdings</strong> di E*TRADE.</p>
+            <ol class="list-decimal list-inside text-sm font-normal space-y-1 mb-3">
+              <li>Vai su Stock Plan → <strong>Holdings</strong> → scheda <strong>View By Status</strong>.</li>
+              <li>Clicca <strong>Download</strong> → <strong>Download Expanded</strong>.</li>
+            </ol>
+            <img src="/static/img/sellable-download.jpg" alt="Menu Download → Download Expanded nella vista Holdings di E*TRADE" class="rounded border border-base-300 w-full mb-3" />
+            <a href="https://us.etrade.com/etx/sp/stockplan?accountIndex=0&amp;traxui=tsp_portfolios/#/holdings/byStatus" target="_blank" rel="noopener" class="btn btn-sm btn-primary">Apri Holdings su E*TRADE</a>
+          </div>
+        </div>
+
         <form method="post" enctype="multipart/form-data" class="flex flex-col gap-3 flex-1">
           {% csrf_token %}
           <input type="file" name="xlsx" accept=".xlsx" required class="file-input file-input-sm w-full" />
@@ -52,8 +74,31 @@
 
       <div class="divider sm:divider-horizontal"></div>
 
-      <div class="flex-1 flex flex-col">
-        <h4 class="font-semibold mb-2">Vendite (Gains &amp; Losses)</h4>
+      <div class="flex-1 flex flex-col" x-data="{ open: false }">
+        <h4 class="font-semibold mb-2 flex items-center gap-1.5">
+          Vendite (Gains &amp; Losses)
+          <button type="button" class="text-base-content/50 hover:text-base-content" @click="open = true" aria-label="Dove trovare il file Gains &amp; Losses">
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v4h1"></path></svg>
+          </button>
+        </h4>
+
+        <div class="modal" :class="{ 'modal-open': open }" x-show="open" x-cloak @click.self="open = false">
+          <div class="modal-box max-w-2xl" @click.stop>
+            <div class="flex items-center justify-between mb-4">
+              <strong class="text-lg">Dove trovo il file Gains &amp; Losses</strong>
+              <button class="btn btn-sm btn-circle btn-ghost" @click="open = false" aria-label="Chiudi">✕</button>
+            </div>
+            <p class="mb-3 text-sm font-normal">È lo storico delle vendite effettuate per un anno fiscale, scaricato dalla sezione <strong>Gains & Losses</strong> di E*TRADE.</p>
+            <ol class="list-decimal list-inside text-sm font-normal space-y-1 mb-3">
+              <li>Vai su Stock Plan → My Account → <strong>Gains &amp; Losses</strong>.</li>
+              <li>Imposta <strong>Tax Year</strong> sull'anno che ti interessa e clicca <strong>Apply</strong>.</li>
+              <li>Clicca <strong>Download</strong> → <strong>Download Expanded</strong>.</li>
+            </ol>
+            <img src="/static/img/gains-losses-download.png" alt="Filtri Tax Year e menu Download → Download Expanded nella vista Gains &amp; Losses di E*TRADE" class="rounded border border-base-300 w-full mb-3" />
+            <a href="https://us.etrade.com/etx/sp/stockplan?accountIndex=0&amp;traxui=tsp_portfolios/#/myAccount/gainsLosses" target="_blank" rel="noopener" class="btn btn-sm btn-primary">Apri Gains &amp; Losses su E*TRADE</a>
+          </div>
+        </div>
+
         <form method="post" enctype="multipart/form-data" class="flex flex-col gap-3 flex-1">
           {% csrf_token %}
           <input type="file" name="gl_xlsx" accept=".xlsx" required class="file-input file-input-sm w-full" />
