@@ -1,9 +1,13 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: corporate --default;
+  themes: corporate --default, dracula --prefersdark;
 }
 @plugin "daisyui/theme" {
   name: "corporate";
+  --radius-box: .5rem;
+}
+@plugin "daisyui/theme" {
+  name: "dracula";
   --radius-box: .5rem;
 }
 

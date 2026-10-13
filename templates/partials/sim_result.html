@@ -7,15 +7,15 @@
     <colgroup>
       <col class="w-[60%]" /><col class="w-[40%]" />
     </colgroup>
-    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Ricavo lordo</th>
+    <tr class="odd:bg-base-100 even:bg-base-200"><th>Ricavo lordo</th>
         <td class="text-right">€{{ result.gross_proceeds_eur|floatformat:2 }}</td></tr>
-    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Costo acquisto</th>
+    <tr class="odd:bg-base-100 even:bg-base-200"><th>Costo acquisto</th>
         <td class="text-right">€{{ result.total_cost_basis_eur|floatformat:2 }}</td></tr>
-    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Plusvalenza netta</th>
+    <tr class="odd:bg-base-100 even:bg-base-200"><th>Plusvalenza netta</th>
         <td class="text-right">€{{ result.net_gain_eur|floatformat:2 }}</td></tr>
-    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th><strong>Imposta (26%)</strong></th>
+    <tr class="odd:bg-base-100 even:bg-base-200"><th><strong>Imposta (26%)</strong></th>
         <td class="text-right"><strong>€{{ result.tax_eur|floatformat:2 }}</strong></td></tr>
-    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]"><th>Netto dopo tasse</th>
+    <tr class="odd:bg-base-100 even:bg-base-200"><th>Netto dopo tasse</th>
         <td class="text-right">€{{ result.net_after_tax_eur|floatformat:2 }}</td></tr>
   </table>
   </div>
@@ -31,7 +31,7 @@
     <thead><tr><th class="text-center">Data</th><th class="text-center">Qtà</th><th class="text-center">Plusvalenza</th></tr></thead>
     <tbody>
     {% for entry in result.per_lot %}
-    <tr class="{% if entry.lot.plan_type == 'ESPP' %}bg-emerald-50{% else %}bg-purple-50{% endif %}">
+    <tr class="{% if entry.lot.plan_type == 'ESPP' %}bg-emerald-50 dark:bg-emerald-950{% else %}bg-purple-50 dark:bg-purple-950{% endif %}">
       <td class="text-center">{{ entry.lot.date_acquired|date:"d/m/y" }}</td>
       <td class="text-right">{{ entry.qty }}</td>
       <td class="text-right">€{{ entry.gain_eur|floatformat:2 }}</td>

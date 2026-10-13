@@ -91,7 +91,7 @@
   </thead>
   <tbody>
   {% for row in rows %}
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">{{ row.lot.plan_type }}</td>
     <td class="text-center">{{ row.lot.date_acquired|date:"d/m/y" }}</td>
     <td class="text-center">{{ row.lot.grant_date|date:"d/m/y"|default:"—" }}</td>
@@ -107,9 +107,9 @@
       {% if row.lot.plan_type == "RSU" %}
         <span class="text-base-content/40">n/d</span>
       {% elif row.lot.period_label == "Long Term" %}
-        <span class="badge badge-sm bg-emerald-50 text-emerald-700 border-0">+3y</span>
+        <span class="badge badge-sm bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-0">+3y</span>
       {% else %}
-        <span class="badge badge-sm bg-orange-50 text-orange-700 border-0">-3y</span>
+        <span class="badge badge-sm bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300 border-0">-3y</span>
       {% endif %}
     </td>
   </tr>
@@ -138,12 +138,12 @@
     </button>
   </div>
   <table class="table">
-    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+    <tr class="odd:bg-base-100 even:bg-base-200">
       <th>Ricavo lordo</th>
       <td class="text-right">${{ sale.gross_proceeds_usd|floatformat:2 }}</td>
       <td class="text-right">€{{ sale.gross_proceeds_eur|floatformat:2 }}</td>
     </tr>
-    <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+    <tr class="odd:bg-base-100 even:bg-base-200">
       <th>Tasse stimate (26%)</th>
       <td class="text-right"><strong>${{ sale.tax_usd|floatformat:2 }}</strong></td>
       <td class="text-right"><strong>€{{ sale.tax_eur|floatformat:2 }}</strong></td>
@@ -164,7 +164,7 @@
         </thead>
         <tbody>
         {% for sl in sale.lots.all %}
-        <tr class="{% if sl.plan_type == 'ESPP' %}bg-emerald-50{% else %}bg-purple-50{% endif %}">
+        <tr class="{% if sl.plan_type == 'ESPP' %}bg-emerald-50 dark:bg-emerald-950{% else %}bg-purple-50 dark:bg-purple-950{% endif %}">
           <td class="text-center">{{ sl.date_acquired|date:"d/m/y" }}</td>
           <td class="text-center">{{ sl.grant_date|date:"d/m/y"|default:"—" }}</td>
           <td class="text-center">{{ sl.plan_type }}</td>

@@ -78,7 +78,7 @@
   </thead>
   <tbody>
   {% for row in detail_rows %}
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">{% if row.date_acquired %}{{ row.date_acquired|date:"d/m/Y" }}{% else %}<span class="text-base-content/40">n/d</span>{% endif %}</td>
     <td class="text-right">{{ row.qty|floatformat:"-4" }}</td>
     <td class="text-right">{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="text-base-content/40">—</span>{% endif %}</td>
@@ -113,7 +113,7 @@
   </thead>
   <tbody>
   {% if rw_full_year %}
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-right">{{ rw_full_year.total_qty|floatformat:"-4" }}</td>
     <td class="text-right">€{{ rw_full_year.value_start_eur|floatformat:2 }}</td>
     <td class="text-right">€{{ rw_full_year.value_end_eur|floatformat:2 }}</td>
@@ -122,7 +122,7 @@
   </tr>
   {% endif %}
   {% for row in rw_partial_rows %}
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-right">{{ row.qty|floatformat:"-4" }}</td>
     <td class="text-right">{% if row.value_start_eur %}€{{ row.value_start_eur|floatformat:2 }}{% else %}<span class="text-base-content/40">N/D</span>{% endif %}</td>
     <td class="text-right">€{{ row.value_end_eur|floatformat:2 }}</td>
@@ -202,7 +202,7 @@
   </thead>
   <tbody>
   {% for sale in sales %}
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">{{ sale.sale_date|date:"d/m/Y" }}</td>
     <td class="text-right">{{ sale.total_qty|floatformat:"-4" }}</td>
     <td class="text-right">€{{ sale.gross_proceeds_eur|floatformat:2 }}</td>
@@ -234,42 +234,42 @@
     </tr>
   </thead>
   <tbody>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT11, col. 1</td>
     <td>Corrispettivi</td>
     <td class="text-right">€{{ sales_totals.gross_proceeds_eur|floatformat:2 }}</td>
   </tr>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT11, col. 2</td>
     <td>Costo fiscalmente riconosciuto</td>
     <td class="text-right">€{{ sales_totals.cost_basis_eur|floatformat:2 }}</td>
   </tr>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT52, col. 2</td>
     <td>Plusvalenza (RT11.1 − RT11.2)</td>
     <td class="text-right">€{{ sales_totals.net_gain_eur|floatformat:2 }}</td>
   </tr>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT71 / RT14</td>
     <td>Minusvalenze da compensare</td>
     <td class="text-right"><span class="text-base-content/40">non gestite dall'app</span></td>
   </tr>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT72</td>
     <td>Plusvalenza netta imponibile (RT52.2 − RT71 − RT14.2)</td>
     <td class="text-right">€{{ sales_totals.net_gain_eur|floatformat:2 }}</td>
   </tr>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT73</td>
     <td>Imposta sostitutiva 26% (RT72 × 26%)</td>
     <td class="text-right">€{{ sales_totals.tax_eur|floatformat:2 }}</td>
   </tr>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT15</td>
     <td>Eccedenza imposta sostitutiva anni precedenti</td>
     <td class="text-right"><span class="text-base-content/40">non gestita dall'app</span></td>
   </tr>
-  <tr class="odd:bg-[#f6f7f9] even:bg-[#eceef1]">
+  <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">RT74</td>
     <td>Imposta dovuta (RT73 − RT15)</td>
     <td class="text-right">€{{ sales_totals.tax_eur|floatformat:2 }}</td>
