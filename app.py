@@ -659,12 +659,24 @@ def dashboard(request):
         .prefetch_related("lots")
         .order_by("sale_date")
     )
-    ctx = _portfolio_context() if has_lots else {"has_lots": False}
-    ctx["sales"] = sales
-    ctx["sale_years"] = sale_years
-    ctx["sale_year"] = year
-    ctx["current_year"] = current_year
+    ctx = {
+        "has_lots": has_lots,
+        "sales": sales,
+        "sale_years": sale_years,
+        "sale_year": year,
+        "current_year": current_year,
+    }
     return render(request, "dashboard.html", ctx)
+
+
+@app.route("/portfolio/")
+def portfolio_fragment(request):
+    """HTMX partial: live-priced KPI stats + lots table, loaded after the page
+    shell paints so the slow yfinance round-trip doesn't block first render."""
+    from django.shortcuts import render
+
+    ctx = _portfolio_context()
+    return render(request, "partials/portfolio_body.html", ctx)
 
 
 @app.route("/prices/")

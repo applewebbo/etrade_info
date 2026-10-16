@@ -713,15 +713,35 @@ class TestDashboardView:
         assert "/static/blades.min.css" not in content
         assert "/static/pico.colors.min.css" not in content
 
-    def test_dashboard_with_lots_and_prices(self, client, mock_prices):
+    def test_dashboard_with_lots_defers_portfolio_body_to_htmx(self, client, mock_prices):
+        """Regression test: the dashboard view used to call _portfolio_context()
+        synchronously, blocking the whole response on a live yfinance round-trip
+        (~2s). It now returns instantly and defers the priced body to /portfolio/
+        via HTMX (hx-trigger="load"), so first paint doesn't wait on the network."""
         from app import Lot
 
         Lot.objects.create(**LOT_DEFAULTS)
         response = client.get("/")
         assert response.status_code == 200
+        assert b'hx-get="/portfolio/"' in response.content
+        assert b"Valore di mercato" not in response.content
+
+    def test_dashboard_without_lots_has_no_portfolio_fragment(self, client):
+        response = client.get("/")
+        assert b'hx-get="/portfolio/"' not in response.content
+
+
+@pytest.mark.django_db
+class TestPortfolioFragment:
+    def test_returns_kpi_and_table_with_prices(self, client, mock_prices):
+        from app import Lot
+
+        Lot.objects.create(**LOT_DEFAULTS)
+        response = client.get("/portfolio/")
+        assert response.status_code == 200
         assert b"Valore di mercato" in response.content
 
-    def test_dashboard_with_lots_and_prices_unavailable(self, client, monkeypatch):
+    def test_with_prices_unavailable(self, client, monkeypatch):
         import prices
         from app import Lot
 
@@ -730,7 +750,7 @@ class TestDashboardView:
         monkeypatch.setattr(prices, "get_eur_usd_rate", lambda: None)
         monkeypatch.setattr(prices, "is_price_stale", lambda ticker: False)
         monkeypatch.setattr(prices, "get_price_direction", lambda ticker: "neutral")
-        response = client.get("/")
+        response = client.get("/portfolio/")
         assert response.status_code == 200
         assert b"quotazioni" in response.content
 

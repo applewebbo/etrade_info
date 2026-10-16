@@ -35,94 +35,26 @@
 </div>
 {% else %}
 
-<!-- Price header — aggiornato via HTMX ogni 60s -->
+<!-- Price header — caricato via HTMX, poi aggiornato ogni 60s -->
 <div hx-get="/prices/" hx-trigger="load, every 60s" hx-swap="outerHTML">
-  {% include "partials/price_header.html" %}
-</div>
-
-{% if prices_unavailable %}
-<div role="alert" class="alert alert-error alert-soft">
-  <span>Dati di portfolio non disponibili: impossibile recuperare le quotazioni. I valori verranno mostrati non appena la connessione sarà ripristinata.</span>
-</div>
-{% else %}
-
-<!-- Riepilogo per tipo -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-  <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">Valore di mercato</div>
-      <div class="stat-value text-indigo-600">€{{ total_value_eur|floatformat:2 }}</div>
-      <div class="stat-desc">${{ total_value_usd|floatformat:2 }}</div>
+  <div class="flex flex-wrap justify-end gap-6 mb-4">
+    <div class="kpi-card card bg-base-100 border border-base-300 px-4 py-2 min-w-32 items-center justify-center">
+      <span class="loading loading-dots loading-sm"></span>
     </div>
-  </div>
-  <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">ESPP — {{ espp.qty|floatformat:"-3" }} azioni</div>
-      <div class="stat-value text-emerald-600">€{{ espp.value_eur|floatformat:2 }}</div>
-      <div class="stat-desc">Tasse stimate: €{{ espp.tax_eur|floatformat:2 }}</div>
-    </div>
-  </div>
-  <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">RSU — {{ rsu.qty|floatformat:"-3" }} azioni</div>
-      <div class="stat-value text-purple-600">€{{ rsu.value_eur|floatformat:2 }}</div>
-      <div class="stat-desc">Tasse stimate: €{{ rsu.tax_eur|floatformat:2 }}</div>
+    <div class="kpi-card card bg-base-100 border border-base-300 px-4 py-2 min-w-32 items-center justify-center">
+      <span class="loading loading-dots loading-sm"></span>
     </div>
   </div>
 </div>
 
-<h2 class="text-2xl font-bold tracking-tight mb-4">Azioni possedute</h2>
-<!-- Tabella posizioni -->
-<div class="card bg-base-100 border border-base-300 overflow-hidden mb-6">
-<div class="overflow-x-auto">
-<table class="table table-sm">
-  <thead>
-    <tr>
-      <th class="text-center">Tipo</th>
-      <th class="text-center">Acquisto</th>
-      <th class="text-center">Assegnazione</th>
-      <th class="text-center">Azioni</th>
-      <th class="text-center">Costo</th>
-      <th class="text-center">Valore oggi</th>
-      <th class="text-center">Guadagno/Perdita</th>
-      <th class="text-center">Var. %</th>
-      <th class="text-center">Tasse stimate</th>
-      <th class="text-center">Periodo</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for row in rows %}
-  <tr class="odd:bg-base-100 even:bg-base-200">
-    <td class="text-center">{{ row.lot.plan_type }}</td>
-    <td class="text-center">{{ row.lot.date_acquired|date:"d/m/y" }}</td>
-    <td class="text-center">{{ row.lot.grant_date|date:"d/m/y"|default:"—" }}</td>
-    <td class="text-right">{{ row.lot.sellable_qty|floatformat:"-3" }}</td>
-    <td class="text-right">${{ row.lot.cost_basis|floatformat:4 }}</td>
-    <td class="text-right">€{{ row.value_eur|floatformat:2 }}</td>
-    <td class="text-right {% if row.gain_usd >= 0 %}text-success{% else %}text-error{% endif %}">
-      €{{ row.gain_eur|floatformat:2 }}</td>
-    <td class="text-right {% if row.gain_pct >= 0 %}text-success{% else %}text-error{% endif %}">
-      {{ row.gain_pct|floatformat:1 }}%</td>
-    <td class="text-right">€{{ row.tax_eur|floatformat:2 }}</td>
-    <td class="text-center">
-      {% if row.lot.plan_type == "RSU" %}
-        <span class="text-base-content/40">n/d</span>
-      {% elif row.lot.period_label == "Long Term" %}
-        <span class="badge badge-sm badge-success">+3y</span>
-      {% else %}
-        <span class="badge badge-sm badge-warning">-3y</span>
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-  </tbody>
-</table>
-</div>
+<!-- Corpo portfolio (KPI + tabella) — caricato via HTMX per non bloccare il
+     primo paint sul fetch live dei prezzi (yfinance, ~1-2s a tentativo). -->
+<div hx-get="/portfolio/" hx-trigger="load" hx-swap="outerHTML">
+  <div class="flex justify-center py-16">
+    <span class="loading loading-spinner loading-lg text-primary"></span>
+  </div>
 </div>
 
-<p class="text-center py-4"><a href="/simulate/" class="btn btn-primary">Vai al simulatore vendita →</a></p>
-
-{% endif %}{# prices_unavailable #}
 {% endif %}{# has_lots #}
 
 {% if sale_years %}
