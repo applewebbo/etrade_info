@@ -6,26 +6,26 @@
 {% else %}
 
 <!-- Riepilogo per tipo -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+<div class="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">Valore di mercato</div>
-      <div class="stat-value text-indigo-600">€{{ total_value_eur|floatformat:2 }}</div>
-      <div class="stat-desc">${{ total_value_usd|floatformat:2 }}</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs truncate">Valore di mercato</div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-indigo-600">€{{ total_value_eur|floatformat:2 }}</div>
+      <div class="stat-desc text-[10px] sm:text-xs truncate">${{ total_value_usd|floatformat:2 }}</div>
     </div>
   </div>
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">ESPP — {{ espp.qty|floatformat:"-3" }} azioni</div>
-      <div class="stat-value text-emerald-600">€{{ espp.value_eur|floatformat:2 }}</div>
-      <div class="stat-desc">Tasse stimate: €{{ espp.tax_eur|floatformat:2 }}</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs truncate">ESPP — {{ espp.qty|floatformat:"-3" }} azioni</div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-emerald-600">€{{ espp.value_eur|floatformat:2 }}</div>
+      <div class="stat-desc text-[10px] sm:text-xs truncate">Tasse stimate: €{{ espp.tax_eur|floatformat:2 }}</div>
     </div>
   </div>
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">RSU — {{ rsu.qty|floatformat:"-3" }} azioni</div>
-      <div class="stat-value text-purple-600">€{{ rsu.value_eur|floatformat:2 }}</div>
-      <div class="stat-desc">Tasse stimate: €{{ rsu.tax_eur|floatformat:2 }}</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs truncate">RSU — {{ rsu.qty|floatformat:"-3" }} azioni</div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-purple-600">€{{ rsu.value_eur|floatformat:2 }}</div>
+      <div class="stat-desc text-[10px] sm:text-xs truncate">Tasse stimate: €{{ rsu.tax_eur|floatformat:2 }}</div>
     </div>
   </div>
 </div>
@@ -39,13 +39,13 @@
     <tr>
       <th class="text-center">Tipo</th>
       <th class="text-center">Acquisto</th>
-      <th class="text-center">Assegnazione</th>
+      <th class="text-center hidden md:table-cell">Assegnazione</th>
       <th class="text-center">Azioni</th>
-      <th class="text-center">Costo</th>
+      <th class="text-center hidden md:table-cell">Costo</th>
       <th class="text-center">Valore oggi</th>
       <th class="text-center">Guadagno/Perdita</th>
-      <th class="text-center">Var. %</th>
-      <th class="text-center">Tasse stimate</th>
+      <th class="text-center hidden md:table-cell">Var. %</th>
+      <th class="text-center hidden md:table-cell">Tasse stimate</th>
       <th class="text-center">Periodo</th>
     </tr>
   </thead>
@@ -54,15 +54,15 @@
   <tr class="odd:bg-base-100 even:bg-base-200">
     <td class="text-center">{{ row.lot.plan_type }}</td>
     <td class="text-center">{{ row.lot.date_acquired|date:"d/m/y" }}</td>
-    <td class="text-center">{{ row.lot.grant_date|date:"d/m/y"|default:"—" }}</td>
+    <td class="text-center hidden md:table-cell">{{ row.lot.grant_date|date:"d/m/y"|default:"—" }}</td>
     <td class="text-right">{{ row.lot.sellable_qty|floatformat:"-3" }}</td>
-    <td class="text-right">${{ row.lot.cost_basis|floatformat:4 }}</td>
+    <td class="text-right hidden md:table-cell">${{ row.lot.cost_basis|floatformat:4 }}</td>
     <td class="text-right">€{{ row.value_eur|floatformat:2 }}</td>
     <td class="text-right {% if row.gain_usd >= 0 %}text-success{% else %}text-error{% endif %}">
       €{{ row.gain_eur|floatformat:2 }}</td>
-    <td class="text-right {% if row.gain_pct >= 0 %}text-success{% else %}text-error{% endif %}">
+    <td class="text-right hidden md:table-cell {% if row.gain_pct >= 0 %}text-success{% else %}text-error{% endif %}">
       {{ row.gain_pct|floatformat:1 }}%</td>
-    <td class="text-right">€{{ row.tax_eur|floatformat:2 }}</td>
+    <td class="text-right hidden md:table-cell">€{{ row.tax_eur|floatformat:2 }}</td>
     <td class="text-center align-middle">
       {% if row.lot.plan_type == "RSU" %}
         <span class="text-base-content/40">n/d</span>

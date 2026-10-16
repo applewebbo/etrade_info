@@ -14,14 +14,14 @@
   <body class="min-h-screen bg-base-200" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>{% csrf_token %}
     <header class="bg-base-300">
       <nav class="navbar max-w-7xl mx-auto px-4">
-        <div class="navbar-start">
+        <div class="navbar-start flex-none w-auto">
           <a href="/" class="flex items-center gap-2 text-lg font-bold">
             <svg class="size-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="14" width="5" height="8" rx="1"></rect><rect x="9.5" y="8" width="5" height="14" rx="1"></rect><rect x="17" y="2" width="5" height="20" rx="1"></rect></svg>
             Etrade Portfolio
           </a>
         </div>
-        <div class="navbar-end">
-          <ul class="menu menu-horizontal gap-1">
+        <div class="navbar-end flex-1 w-auto">
+          <ul class="menu menu-horizontal menu-sm sm:menu-md gap-1 flex-wrap justify-end">
             <li><a href="/" {% if request.path == "/" %}aria-current="page"{% endif %} class="aria-current:font-bold">Dashboard</a></li>
             <li><a href="/simulate/" {% if request.path == "/simulate/" %}aria-current="page"{% endif %} class="aria-current:font-bold">Vendita</a></li>
             <li><a href="/tasse/" {% if request.path == "/tasse/" %}aria-current="page"{% endif %} class="aria-current:font-bold">Tasse</a></li>

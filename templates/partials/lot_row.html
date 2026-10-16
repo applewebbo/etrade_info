@@ -1,6 +1,6 @@
 <tr id="lot-row-{{ lot.pk }}" class="odd:bg-base-100 even:bg-base-200">
   <td class="text-center">{{ lot.date_acquired|date:"d/m/y" }}</td>
-  <td class="text-center">{{ lot.grant_date|date:"d/m/y"|default:"—" }}</td>
+  <td class="text-center hidden md:table-cell">{{ lot.grant_date|date:"d/m/y"|default:"—" }}</td>
   <td class="text-right">${{ lot.cost_basis|floatformat:4 }}</td>
   <td class="text-right">{{ lot.sellable_qty|floatformat:"-4" }}</td>
   <td class="text-center align-middle">

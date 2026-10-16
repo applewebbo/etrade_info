@@ -46,26 +46,26 @@
 {% else %}
 
 <!-- Tre card principali -->
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+<div class="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">Valore al 2 gennaio {{ year|unlocalize }} <span class="text-base-content/40">(€/$ {{ rate_start|floatformat:4 }})</span></div>
-      <div class="stat-value text-indigo-600">€{{ total_value_start_eur|floatformat:2 }}</div>
-      <div class="stat-desc">AAPL ${{ price_start|floatformat:2 }}</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs whitespace-normal">Valore al 2 gennaio {{ year|unlocalize }} <span class="text-base-content/40">(€/$ {{ rate_start|floatformat:4 }})</span></div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-indigo-600">€{{ total_value_start_eur|floatformat:2 }}</div>
+      <div class="stat-desc text-[10px] sm:text-xs truncate">AAPL ${{ price_start|floatformat:2 }}</div>
     </div>
   </div>
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">{% if is_in_progress_year %}Valore odierno (stima 31/12){% else %}Valore al 31 dicembre {{ year|unlocalize }}{% endif %} <span class="text-base-content/40">(€/$ {{ rate_end|floatformat:4 }})</span></div>
-      <div class="stat-value text-purple-600">€{{ total_value_end_eur|floatformat:2 }}</div>
-      <div class="stat-desc">AAPL ${{ price_end|floatformat:2 }}</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs whitespace-normal">{% if is_in_progress_year %}Valore odierno (stima 31/12){% else %}Valore al 31 dicembre {{ year|unlocalize }}{% endif %} <span class="text-base-content/40">(€/$ {{ rate_end|floatformat:4 }})</span></div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-purple-600">€{{ total_value_end_eur|floatformat:2 }}</div>
+      <div class="stat-desc text-[10px] sm:text-xs truncate">AAPL ${{ price_end|floatformat:2 }}</div>
     </div>
   </div>
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">IVAFE stimata {{ year|unlocalize }}</div>
-      <div class="stat-value text-orange-600">€{{ total_ivafe_eur|floatformat:2 }}</div>
-      <div class="stat-desc">2‰ × valore 31/12 × giorni/365</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs truncate">IVAFE stimata {{ year|unlocalize }}</div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-orange-600">€{{ total_ivafe_eur|floatformat:2 }}</div>
+      <div class="stat-desc text-[10px] sm:text-xs truncate">2‰ × valore 31/12 × giorni/365</div>
     </div>
   </div>
 </div>
@@ -173,24 +173,24 @@
 </div>
 {% else %}
 
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+<div class="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">Corrispettivi totali {{ year|unlocalize }}</div>
-      <div class="stat-value text-indigo-600">€{{ sales_totals.gross_proceeds_eur|floatformat:2 }}</div>
-      <div class="stat-desc">{{ sales|length }} vendit{{ sales|length|pluralize:"a,e" }} · {{ sales_totals.qty|floatformat:"-4" }} azioni</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs truncate">Corrispettivi totali {{ year|unlocalize }}</div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-indigo-600">€{{ sales_totals.gross_proceeds_eur|floatformat:2 }}</div>
+      <div class="stat-desc text-[10px] sm:text-xs truncate">{{ sales|length }} vendit{{ sales|length|pluralize:"a,e" }} · {{ sales_totals.qty|floatformat:"-4" }} azioni</div>
     </div>
   </div>
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">Plusvalenza netta {{ year|unlocalize }}</div>
-      <div class="stat-value text-purple-600">€{{ sales_totals.net_gain_eur|floatformat:2 }}</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs truncate">Plusvalenza netta {{ year|unlocalize }}</div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-purple-600">€{{ sales_totals.net_gain_eur|floatformat:2 }}</div>
     </div>
   </div>
   <div class="stats bg-base-100 border border-base-300">
-    <div class="stat">
-      <div class="stat-title">Imposta stimata {{ year|unlocalize }} (26%)</div>
-      <div class="stat-value text-orange-600">€{{ sales_totals.tax_eur|floatformat:2 }}</div>
+    <div class="stat px-2 py-2 sm:px-6 sm:py-4">
+      <div class="stat-title text-[10px] sm:text-xs truncate">Imposta stimata {{ year|unlocalize }} (26%)</div>
+      <div class="stat-value text-base sm:text-2xl md:text-3xl text-orange-600">€{{ sales_totals.tax_eur|floatformat:2 }}</div>
     </div>
   </div>
 </div>
