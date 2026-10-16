@@ -3,13 +3,13 @@
   <td class="text-center">{{ lot.grant_date|date:"d/m/y"|default:"—" }}</td>
   <td class="text-right">${{ lot.cost_basis|floatformat:4 }}</td>
   <td class="text-right">{{ lot.sellable_qty|floatformat:"-4" }}</td>
-  <td class="text-center">
+  <td class="text-center align-middle">
     {% if lot.plan_type == "RSU" %}
       <span class="text-base-content/40">n/d</span>
     {% elif lot.period_label == "Long Term" %}
-      <span class="badge badge-sm badge-success">+3y</span>
+      <span class="badge badge-success font-semibold">+3y</span>
     {% else %}
-      <span class="badge badge-sm badge-warning">-3y</span>
+      <span class="badge badge-warning font-semibold">-3y</span>
     {% endif %}
   </td>
   <td class="text-center" x-data="{ qty: 0, max: {{ lot.sellable_qty|floatformat:'4u' }}, set(v){ this.qty=v; this.$nextTick(()=>this.$refs.q.dispatchEvent(new Event('change',{bubbles:true}))) } }">

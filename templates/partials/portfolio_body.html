@@ -63,13 +63,13 @@
     <td class="text-right {% if row.gain_pct >= 0 %}text-success{% else %}text-error{% endif %}">
       {{ row.gain_pct|floatformat:1 }}%</td>
     <td class="text-right">€{{ row.tax_eur|floatformat:2 }}</td>
-    <td class="text-center">
+    <td class="text-center align-middle">
       {% if row.lot.plan_type == "RSU" %}
         <span class="text-base-content/40">n/d</span>
       {% elif row.lot.period_label == "Long Term" %}
-        <span class="badge badge-sm badge-success">+3y</span>
+        <span class="badge badge-success font-semibold">+3y</span>
       {% else %}
-        <span class="badge badge-sm badge-warning">-3y</span>
+        <span class="badge badge-warning font-semibold">-3y</span>
       {% endif %}
     </td>
   </tr>
