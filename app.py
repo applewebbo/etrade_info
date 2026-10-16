@@ -22,6 +22,7 @@ app = Django(
     ALLOWED_HOSTS=["localhost", "127.0.0.1"],
     LANGUAGE_CODE="it",
     USE_L10N=True,
+    USE_THOUSAND_SEPARATOR=True,
     TIME_ZONE="Europe/Rome",
     USE_TZ=True,
     INSTALLED_APPS=[

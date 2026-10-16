@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block title %}Dashboard — Etrade Portfolio{% endblock %}
 {% block content %}
 
@@ -132,7 +133,7 @@
     <label for="sale-year-select" class="text-sm">Anno</label>
     <select id="sale-year-select" name="year" onchange="this.form.submit()" class="select select-sm w-auto">
       {% for y in sale_years %}
-      <option value="{{ y }}" {% if y == sale_year %}selected{% endif %}>{{ y }}</option>
+      <option value="{{ y|unlocalize }}" {% if y == sale_year %}selected{% endif %}>{{ y|unlocalize }}</option>
       {% endfor %}
     </select>
   </form>
@@ -210,7 +211,7 @@
 </div>
 {% else %}
 <div role="alert" class="alert alert-soft">
-  <span>Nessuna vendita registrata per l'anno {{ sale_year }}.</span>
+  <span>Nessuna vendita registrata per l'anno {{ sale_year|unlocalize }}.</span>
 </div>
 {% endif %}{# sales #}
 {% endif %}{# sale_years #}

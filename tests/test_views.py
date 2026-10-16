@@ -1305,7 +1305,7 @@ class TestQuadroVenditeSection:
         response = client.get("/tasse/", {"year": 2025})
         assert response.status_code == 200
         assert b"Nessuna vendita" not in response.content
-        assert b"1818,18" in response.content  # gross proceeds EUR (2000/1.1)
+        assert b"1.818,18" in response.content  # gross proceeds EUR (2000/1.1)
 
     def test_multiple_sales_sum_totals(self, client, mock_ivafe_data):
         from app import Sale, SaleLot
@@ -1317,7 +1317,7 @@ class TestQuadroVenditeSection:
 
         response = client.get("/tasse/", {"year": 2025})
         assert response.status_code == 200
-        assert b"1818,18" in response.content  # net gain EUR total: 2 x (1000/1.1)
+        assert b"1.818,18" in response.content  # net gain EUR total: 2 x (1000/1.1)
 
     def test_sale_outside_selected_year_is_excluded(self, client, mock_ivafe_data):
         from app import Sale, SaleLot
@@ -1381,7 +1381,7 @@ class TestQuadroVenditeSection:
         response = client.get("/tasse/", {"year": 2025})
         assert response.status_code == 200
         assert b"Note Quadro RT" in response.content
-        assert b"1636,36" in response.content  # cost basis EUR: (3000-1200)/1.1
+        assert b"1.636,36" in response.content  # cost basis EUR: (3000-1200)/1.1
 
 
 @pytest.mark.django_db
@@ -1396,7 +1396,7 @@ class TestTasseIvafeSoldLots:
         assert response.status_code == 200
         assert b"nessun lotto" not in response.content.lower()
         assert (
-            b"2200,00" in response.content
+            b"2.200,00" in response.content
         )  # value_end_eur: 200 (sale price) * 10 * 1.1 (eur_usd_rate)
 
     def test_old_disclaimer_about_sold_lots_is_removed(self, client, mock_ivafe_data):
@@ -1446,7 +1446,7 @@ class TestTasseIvafeSoldLots:
         assert response.status_code == 200
         # combined value_end_eur for 20 shares (10+10): 200 * 20 * 1.1, grouped into one row
         # in the Quadro RW table (the per-lot detail table above stays ungrouped).
-        assert b"4400,00" in response.content
+        assert b"4.400,00" in response.content
 
 
 @pytest.mark.django_db

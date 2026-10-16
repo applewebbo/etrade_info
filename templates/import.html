@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block title %}Impostazioni — Etrade Portfolio{% endblock %}
 {% block content %}
 
@@ -102,7 +103,7 @@
         </div>
 
         <form method="post" enctype="multipart/form-data" class="flex flex-col gap-3 flex-1"
-              x-data="{ mode: 'overwrite', year: {{ gl_default_year }}, updatePortfolio: true }">
+              x-data="{ mode: 'overwrite', year: {{ gl_default_year|unlocalize }}, updatePortfolio: true }">
           {% csrf_token %}
           <input type="file" name="gl_xlsx" accept=".xlsx" required class="file-input file-input-sm w-full" />
 
@@ -127,7 +128,7 @@
             Anno fiscale
             <select name="year" x-model.number="year" class="select select-sm w-auto">
               {% for y in gl_years %}
-              <option value="{{ y }}" {% if y == gl_default_year %}selected{% endif %}>{{ y }}</option>
+              <option value="{{ y|unlocalize }}" {% if y == gl_default_year %}selected{% endif %}>{{ y|unlocalize }}</option>
               {% endfor %}
             </select>
           </label>
